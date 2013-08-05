@@ -60,3 +60,11 @@ height:expression(document.body.clientHeight<500?"500px":"auto");
 	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
 	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
 }
+
+/* Billing */
+
+#billing {
+	font-size: x-small;
+	overflow-y: auto;
+}
+

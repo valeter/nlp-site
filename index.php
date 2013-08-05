@@ -76,7 +76,7 @@
     <p>Hadoop</p>
     <div class="stats_block">stats</div>
     <p>Биллинг</p>
-    <div class="stats_block">stats</div>
+    <div class="stats_block" id="billing"><?php include 'billing.php'; ?></div>
   </div>
 </div>
 
