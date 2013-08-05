@@ -1,0 +1,62 @@
+
+
+body {
+	font: 100% Myriad Pro, Arial, Helvetica, sans-serif;
+	background: #fff url(../images/bottom.jpg) repeat-x bottom;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #116084;
+	  height: 750px;
+	  height:expression(document.body.clientHeight<750?"750px":"auto");
+}
+.oneColLiqCtrHdr #top_wrap {
+	background: url(../images/top_bg.jpg) repeat-x center; 
+	height:130px; text-align: center; 
+}
+.oneColLiqCtrHdr #header {
+	background: url(../images/header_bg.jpg) no-repeat center; 
+	height:130px; width:1000px;  text-align: center;  margin:0 auto; position:relative;
+}
+
+.oneColLiqCtrHdr #header #cloud {position:absolute; top:5px; left:770px;}
+.oneColLiqCtrHdr #header h1,h2 {font-family:Century Gothic, Myriad Pro, Arial, Helvetica, sans-serif; font-weight:bold; font-size:14px; padding-top:15px;}
+.oneColLiqCtrHdr #header h2 {font-family:Century Gothic, Myriad Pro, Arial, Helvetica, sans-serif; font-weight:normal; font-size:12px; margin-top:30px;}
+
+.oneColLiqCtrHdr #container {
+	width: 1000px;  /* this will create a container 80% of the browser width */
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	text-align: center; /* this overrides the text-align: center on the body element. */
+	overflow:hidden;
+	padding-left:10px;
+	height:500px;
+height:expression(document.body.clientHeight<500?"500px":"auto");
+}
+.oneColLiqCtrHdr  .inner_block1 {width:235px; height:500px; float:left; margin:5px 0 0 0;}
+.oneColLiqCtrHdr  .inner_block {width:235px; height:500px;  float:left; margin:5px 10px;}
+.oneColLiqCtrHdr  .inner_block4 {width:235px; height:500px;  float:left; margin:5px 0 0 10px;}
+
+.oneColLiqCtrHdr  .block_heading {width:235px; height:26px; background:url(../images/headings.jpg) no-repeat;font-family:Century Gothic, Myriad Pro, Arial, Helvetica, sans-serif; font-weight:normal; font-size:14px; color:#333333; text-align:center; margin:16px 0 8px 0; padding-top:8px;}
+
+.oneColLiqCtrHdr  .inner_block_content {width:235px; height:430px; background-color:#d6edf0; color:#003a62; padding-top:5px;}
+.oneColLiqCtrHdr  .inner_block_content a {border:1px solid #275889; width:205px; margin:5px 10px 20px 10px; color:#003a62; text-decoration:none; text-align:left; font-size:13px; padding:5px; display:block;}
+.oneColLiqCtrHdr  .inner_block_content a:hover {border:1px solid #006699; width:205px; margin:5px 10px 20px 10px; color:#006699; text-decoration:none; text-align:left; font-size:13px; padding:5px; display:block;}
+
+.oneColLiqCtrHdr  .inner_block_content p {text-align:left; font-weight:bold; font-size:14px; padding:0; margin:7px 10px;}
+.oneColLiqCtrHdr  .stats_block {background:#FFFFFF; border:1px solid #275889; width:205px; height:95px; margin-left:8px; text-align:left; padding:5px;}
+
+.oneColLiqCtrHdr  #block_mail {background: url(../images/block_mail.jpg) no-repeat; height:175px; margin-bottom:35px;}
+.oneColLiqCtrHdr  #block_zakupki {background: url(../images/block_zakupki.jpg) no-repeat; height:175px;}
+.oneColLiqCtrHdr  #block_smi {background: url(../images/block_kids.jpg) no-repeat; height:399px;}
+.oneColLiqCtrHdr  #block_autoclass {background: url(../images/block_autoclass.jpg) no-repeat; height:175px; margin-bottom:35px;}
+.oneColLiqCtrHdr  #block_2lang {background: url(../images/block_2lang.jpg) no-repeat; height:175px;} 
+
+
+.oneColLiqCtrHdr #footer { 
+	padding: 0 10px; /* this padding matches the left alignment of the elements in the divs that appear above it. */
+	background:#DDDDDD;
+} 
+.oneColLiqCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
