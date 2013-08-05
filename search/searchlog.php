@@ -1,19 +1,6 @@
 <?php
 require_once("./tools.php");
-//http://localhost:8983/solr/select?shards=localhost:8983/solr/collection5,localhost:8983/solr/collection6
 
-function write2tmplog($text)
-{
- //$ip=$_SERVER['REMOTE_ADDR'];
- //$ua=$_SERVER['HTTP_USER_AGENT'];
- //$today = date("D M j G:i:s T Y");  
- $myFile = "/var/www/search_i.log";
- $fh = fopen($myFile, 'a+');
- $stringData = $text . "\n";
- echo $stringData;
- fwrite($fh, $stringData); 
- fclose($fh); 
-}
 function showHeader()
 {
 	echo <<<END
@@ -80,44 +67,6 @@ function showFullResponseSize($size)
 	  }
 	}
 }
-//function generatequery($query2,$sort)
-//{
-	//if ($sort!="solr"){
-		//$query3 = '+'.$query2.'+_val_:"'.$sort.'"^100';
-    //} else {
-		//$query3=$query2;
-	//}		
-    //return $query3;
-//}
-function generatesort($query2,$sort)
-{
-	//echo "<pre>$query2</pre>";
-	$ar1= array("(", ")"," ");
-	$ar2= array("AND", "OR");	
-	$query3='sum(div('.$sort.',10),product(strdist(\''.str_replace($ar1,'',str_replace($ar2,'+',$query2)).'\',term,ngram),termlength)) desc';
-	return $query3;
-	//product(strdist('КВАДРАТИЧНЫЙ+ФУНКЦИЯ'%2Cterm%2Cngram),termlength)+desc
-}
-function showResponseSize($size)
-{	
-	$sd10=$size % 10;
-	$sm10=($size-$sd10)/10;
-	if ($sm10==1)
-	{
-		return $size." вхождений";  
-	} else {
-	if ($sd10==1)
-	{
-		return $size." вхождение";  
-	} else {
-		if (($sd10>1)&&($sd10<5))
-		{
-			return $size." вхождения";  
-		} else {
-			return $size." вхождений";  
-		}
-	}		}
-}
 function showFooterSearch()
 {
 	echo "<div id=\"clear\"></div>";
@@ -130,24 +79,21 @@ function showSideBar()
 echo <<<END
  <div id="content" class="sidebar">
     <div id="sidebar">
-    
+    <div class="sidebarpic">
+    <a href="http://nlp-systems.ru/"><img src="picture/cloud.png" width="200px" alt="NLP@Cloud"/></a>
+    </div>
+    <div class="sidebarpic">  
+    <a href="http://mathnet.ru/ivm"><img src="picture/ivm.jpg" width="200px" alt="Math-Net.Ru Журнал &quot;Известия высших учебных заведений. Математика&quot;"/></a>
+    </div>
+    <div class="sidebarpic">
+    <a href="http://arxiv.org/"><img src="picture/arxiv.png" width="200px" alt="Лаборатория математической и компьютеной лингвистики"/></a>
+    </div>
     </div>
     </div>
 END;
 }
 /*
-  <div class="sidebarpic">
-    <a href="http://kpfu.ru/"><img src="picture/kfu.jpg" width="200px" alt="Казанский (Приволжский) Федеральный Университет"/></a>
-    </div>
-    <div class="sidebarpic">  
-    <a href="http://mathnet.ru/ivm"><img src="picture/ivm.jpg" width="200px" alt="Math-Net.Ru"/></a>
-    </div>
-    <div class="sidebarpic">
-    <a href="http://www.ksu.ru/journals/izv_vuz/"><img src="picture/ivm2.jpg" width="200px" alt="Журнал &quot;Известия высших учебных заведений. Математика&quot;"/></a>
-    </div>
-    <div class="sidebarpic">
-    <a href="http://cll.niimm.ksu.ru/"><img src="picture/cll.png" width="200px" alt="Лаборатория математической и компьютеной лингвистики"/></a>
-    </div>
+  
     */
 
 
@@ -163,21 +109,21 @@ function write2log($query,$query2,$offset)
  fwrite($fh, $stringData); 
  fclose($fh); 
 }
-function showNavigation($dz,$offset,$limit,$query,$query2)
+function showNavigation($dz,$offset,$limit,$query,$m1,$l1,$e1)
 {
     //print_r($dz);
     echo "<div class=\"result_info\">\n";    
 	$nextp=$offset+$limit;
     $prevp=$offset-$limit;
     if ($dz[2]) {
-		  echo "  <a href=\"searchlog.php?q=$query&amp;o=$prevp\">&lt; Предыдущая </a>"; 
+		  echo "  <a href=\"searchlog.php?q=$query&amp;o=$prevp&amp;m=$m1&amp;l=$l1&amp;e=$e1\">&lt; Предыдущая </a>"; 
 	  } 
 	  else {
 		  echo "  &lt; Предыдущая "; 
 	  }
 	 echo " Страница ". $dz[0];
     if ($dz[1]) {
-		  echo "<a href=\"searchlog.php?q=$query&amp;o=$nextp\"> Следующая &gt;</a> \n";
+		  echo "<a href=\"searchlog.php?q=$query&amp;o=$nextp&amp;m=$m1&amp;l=$l1&amp;e=$e1\"> Следующая &gt;</a> \n";
 	  }
 	  else {
 		  echo " Следующая &gt;\n";
@@ -328,22 +274,24 @@ function generatequery($query,$focus)
 
 
 
+
   require_once( '../Apache/Solr/Service2.php' );
-  $solr = new Apache_Solr_Service( 'localhost', '8983', '/solr/collection6/' );
+  $solr = new Apache_Solr_Service( 'localhost', '8983', '/solr/collection6' );
   if (isset($_GET['q'])){
     $query=$_GET['q'];
   }else{
     $query = "";
   }
   $focus=0;
+  $query2=$query;
   if (isset($_GET['m'])){
 	$m1=$_GET['m'];
 	if ($m1!='нет'){
-		$query=$m1;
+		$query2=$m1;
 		$focus=1;
 	}
   }
-  $query2=$query;
+  
   $sort="s";
   if (isset($_GET['o'])){
     $offset=$_GET['o'];
@@ -366,8 +314,6 @@ function generatequery($query,$focus)
             showFooter();
             exit;
 	}else{
-		    //sleep(2);
-		    //write2tmplog("Ssnr: r=".($retry+1)."&amp;q=".str_replace(' ','+',$query)."&amp;s=".$sort);
 			header("Location: searchlog.php?r=".($retry+1)."&q=".str_replace(' ','+',$query)."&s=".$sort);
 			exit;
 	}
@@ -382,8 +328,16 @@ function generatequery($query,$focus)
   //$params['sort']=$query3s;
   //$params['group.field']='link';
   $params['shards']='';
-  $e1=$GLOBALS['e1'];
-  $l1=$GLOBALS['l1'];
+  if (isset($_GET['l'])) {
+	  $l1=$_GET['l'];
+  }else{
+	  $l1='';
+  }
+  if (isset($_GET['e'])) {
+	  $e1=$_GET['e'];
+  }else{
+	  $e1='';
+  }
   #echo "$e1"."|"."$l1";
   if ($e1=='e') {$params['shards'].='localhost:8983/solr/collection6';}
   if (($e1=='e')&&($l1=='l')){$params['shards'].=',';}
@@ -395,9 +349,6 @@ function generatequery($query,$focus)
   $params['hl.fl']='text';
   $params['hl.fragsize']='500';
   $params['q.op']='AND';
-  #$query2='"'.$query2.'"~10';
-  #$params['group.limit']='1';
-  #$params['group.format']='simple';
   $limit=10;
   //echo "<pre>$query3s</pre>";
   $response = $solr->search( $query2, $offset, $limit, $params);
@@ -415,11 +366,10 @@ function generatequery($query,$focus)
   */  
       if ( $response->response->numFound > 0 ) {
 		$nav=navigation($solr,$query2,$offset,$limit, $params);
-		showNavigation($nav,$offset,$limit,$query,$query2,$sort);
+		showNavigation($nav,$offset,$limit,$query,$m1,$l1,$e1);
 		echo "<div id=\"result_list\">\n";
 		$inum=$offset;
-        foreach ( $response->response->docs as $doc ) { 
-		  #print_r( $group->doclist->docs[0]->preview[0]);
+        foreach ( $response->response->docs as $doc ) { 		  
           $inum++;
 	      echo "  <div class=\"result\"><h3>\n";
           echo "    ".$inum.". <a href=\"" . $doc->link . "\">" . htmlspecialchars($doc->title) . "</a></h3> \n";
@@ -427,25 +377,18 @@ function generatequery($query,$focus)
           echo "      ".$doc->author."\n";
           echo "      ".$doc->year ."\n";
           echo "    </div>\n";
-          #echo "    <div class=\"pubinfo\">\n";
-          #echo "      УДК: " . $doc->udk."\n";
-          #echo "    </div>\n";
           echo "    <div class=\"snippet\">\n";          
           $docid=$doc->id;
-          #if ()
-          #echo "<div><pre>";
           if (isset($response->highlighting->$docid->text[0])){
 			 echo "      ".str_replace(array('&lt;br/','&lt;br','r/&gt;','br/&gt;','&lt;b','/&gt;','&lt;','&gt;'),array('','','','','','','',''),str_replace(array('&lt;em&gt;','&lt;/em&gt;','&lt;br/&gt;'),array('<em>','</em>','<br/>'),htmlspecialchars($response->highlighting->$docid->text[0])))."\n"; 
-		  }else {
-		      #echo "</pre></div>"; 
+		  }else {		    
               echo "      No preview\n" ;
 			}
-          echo "    </div>\n";
-          //echo "    <a href=\"adlog.php?d=" . $doc->data . "\">Читать полный текст лога</a> \n";
+          echo "    </div>\n";          
           echo "  </div>\n";
         }
-        echo "</div>\n";//result_list<em> </em> 
-        showNavigation($nav,$offset,$limit,$query,$query2,$sort);
+        echo "</div>\n";
+        showNavigation($nav,$offset,$limit,$query,$m1,$l1,$e1);
     } else {
 		if (($query2=="error286")||($query2=="error317"))
 		   echo "[WordNet]Error: not found in dictionary";

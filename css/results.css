@@ -52,6 +52,17 @@ text-align:justify;
 	font: times;
 }
 
+tr#focus_head {	
+	width: 100%;
+	background-color: #999999;
+}
+tr#focus_body {	
+	width: 100%;
+}
+td.focus_element {	
+	width: 25%;
+	text-align: left;
+}
 select.soption {
   width: 100%;
   font: times;

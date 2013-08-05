@@ -107,17 +107,17 @@ END;
 
 echo <<<END
 <table width="100%" border="0" cellspacing="1" cellpadding="4">
-  <tr align="left" width="100%" bgcolor="#999999">
-    <td colspan="3" width="25%" align="left" >Фокусировка запроса</td>
+  <tr id="focus_head">
+    <td align="left" colspan="4">Фокусировка запроса</td>
   </tr>
 </table> 
-    <table width="100%" border="0" cellspacing="0" cellpadding="4">
-      <tr align="left" width="100%">
+<table width="100%" border="0" cellspacing="0" cellpadding="4">
+      <tr id="focus_body">
 END;
 # 
 #display meanings
 #
-echo '<td colspan="3" width="25%">'."\n";
+echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Значение</legend>'."\n";
 #echo '<select size="7" name="m" class="soption" id="mean" onchange="var country=document.getElementById("colloc"); alert(country.options[country.selectedIndex].value); country.selectedIndex = 0; this.form.submit()">'."\n";
@@ -158,7 +158,7 @@ echo '</td>'."\n";
 #display collocations
 #
 # onchange="this.form.submit()"
-echo '<td colspan="3" width="25%">'."\n";
+echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Словосочетание</legend>'."\n";
 echo '<select size="7" name="c" class="soption" id="colloc" disabled="disabled">'."\n";
@@ -195,22 +195,26 @@ echo "</td>\n";
 
 
 echo <<<END
-        <td colspan="3" width="25%">Тема</td>
-        <td colspan="3" width="25%" align="left">
+        <td class="focus_element">Тема</td>
+        <td class="focus_element" align="left">
 END;
 
 if (isset($_GET['l'])) {
-    $GLOBALS['l1'] = $_GET['l'];
-    echo '<input type="checkbox" name="l" value="l" checked="checked" />Результаты на русском <br/>'."\n";
+	if ($_GET['l']=='l'){
+		echo '<input type="checkbox" name="l" value="l" checked="checked" />Результаты на русском <br/>'."\n";
+	}else{
+		echo '<input type="checkbox" name="l" value="l" />Результаты на русском <br/>'."\n";
+	}
 } else {
-	$GLOBALS['l1']="";
 	echo '<input type="checkbox" name="l" value="l" />Результаты на русском <br/>'."\n";
 }
 if (isset($_GET['e'])) {
-    $GLOBALS['e1'] = $_GET['e'];
-    echo '<input type="checkbox" name="e" value="e" checked="checked" />Результаты на английском'."\n";
+	if ($_GET['e']=='e'){
+		echo '<input type="checkbox" name="e" value="e" checked="checked" />Результаты на английском'."\n";
+	}else{
+		echo '<input type="checkbox" name="e" value="e" />Результаты на английском'."\n";
+	}
 } else {
-	$GLOBALS['e1']="";
 	echo '<input type="checkbox" name="e" value="e" />Результаты на английском'."\n";
 }  
 
