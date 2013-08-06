@@ -9,6 +9,5 @@ if($_GET['do'] == 'logout'){
 if(!$_SESSION['admin']){
 	header("Location: enter.php");
 	exit;
-}
+} 
 ?>
-
