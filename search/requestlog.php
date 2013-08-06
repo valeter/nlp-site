@@ -74,9 +74,8 @@ function suggest_by_meaning($query)
 }
 
 
-//<select size="7" name="m">
 
-//<div align="center" >
+
 require_once( '../Apache/Solr/Service2.php' );
 
 if (isset($_GET['q'])) {
@@ -86,6 +85,7 @@ if (isset($_GET['q'])) {
 }
 $meanings=suggest_by_meaning($q1);
 $collocations=$meanings;
+$themes=$meanings;
 //print_r($meanings);
 
 echo <<<END
@@ -120,17 +120,16 @@ END;
 echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Значение</legend>'."\n";
-#echo '<select size="7" name="m" class="soption" id="mean" onchange="var country=document.getElementById("colloc"); alert(country.options[country.selectedIndex].value); country.selectedIndex = 0; this.form.submit()">'."\n";
 echo '<select size="7" name="m" class="soption" id="mean">'."\n";
-$vbp=0;
+$vbp[0]=0;
 if (isset($_GET['m'])) {
 	$m1=$_GET['m'];
 	foreach ($meanings as $meaning) {
-		$vbp=($vbp||($meaning==$m1));
+		$vbp[0]=($vbp[0]||($meaning==$m1));
 	}
 }
 
-if ($vbp==0){
+if ($vbp[0]==0){
 	echo '   <option selected="selected" value="нет">нет</option>'."\n";
 	foreach ($meanings as $meaning) {
 		echo '   <option value="'.$meaning.'">'.$meaning.'</option>'."\n";
@@ -157,19 +156,18 @@ echo '</td>'."\n";
 # 
 #display collocations
 #
-# onchange="this.form.submit()"
 echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Словосочетание</legend>'."\n";
 echo '<select size="7" name="c" class="soption" id="colloc" disabled="disabled">'."\n";
-$vbp=0;
+$vbp[1]=0;
 if (isset($_GET['c'])) {
 	$c1=$_GET['c'];
 	foreach ($collocations as $collocation) {
-		$vbp=($vbp||($collocation=$c1));
+		$vbp[1]=($vbp[1]||($collocation==$c1));
 	}
 }
-if ($vbp==0){
+if ($vbp[1]==0){
 	echo '   <option selected="selected" value="нет">нет</option>'."\n";
 	foreach ($collocations as $collocation) {
 		echo '   <option value="'.$collocation.'">'.$collocation.'</option>'."\n";
@@ -193,11 +191,45 @@ echo "</td>\n";
 #
 #
 
+# 
+#display themess
+#
+echo '<td class="focus_element">'."\n";
+echo '<fieldset>'."\n";
+echo '   <legend>Тема</legend>'."\n";
+echo '<select size="7" name="t" class="soption" id="theme" disabled="disabled">'."\n";
+$vbp[2]=0;
+if (isset($_GET['t'])) {
+	$t1=$_GET['t'];
+	foreach ($themes as $theme) {
+		$vbp[2]=($vbp[2]||($theme==$t1));
+	}
+}
+if ($vbp[2]==0){
+	echo '   <option selected="selected" value="нет">нет</option>'."\n";
+	foreach ($themes as $theme) {
+		echo '   <option value="'.$theme.'">'.$theme.'</option>'."\n";
+	}
+}else{
+	echo '   <option value="нет">нет</option>'."\n";
+	foreach ($themes as $theme) {
+		if ($theme==$t1){
+			echo '   <option selected="selected" value="'.$theme.'">'.$theme.'</option>'."\n";
+		}else{
+			echo '   <option value="'.$theme.'">'.$theme.'</option>'."\n";
+		}
+	}
+}
 
-echo <<<END
-        <td class="focus_element">Тема</td>
-        <td class="focus_element" align="left">
-END;
+
+echo "</select>\n";
+echo "</fieldset>\n";
+echo "</td>\n";
+#
+#
+#
+
+echo '<td class="focus_element" align="left">';
 
 if (isset($_GET['l'])) {
 	if ($_GET['l']=='l'){
@@ -229,14 +261,23 @@ echo "</div>"."\n";
 
 echo <<<END
 <script type="text/javascript">
-// Создаем новый объект связанных списков
 var syncList1 = new syncList;
+syncList1.selectList = new Array( 'mean', 'colloc', 'theme');
 syncList1.dataList = {
 'mean':'0',
-'colloc':'1'
+'colloc':'1',
+'theme':'2'
 };
-// Включаем синхронизацию связанных списков
-syncList1.sync("mean","colloc");
-</script>
+syncList1.sync("mean","colloc","theme");
+
 END;
+$snum=0;
+for ($i=0;$i<=2;$i++){
+	if ($vbp[$i]==1) {
+		$snum=$i;
+	}
+}
+echo "syncList1._init(syncList1.selectList[$snum]);"."\n";
+echo '</script>'."\n";
+
 ?>
