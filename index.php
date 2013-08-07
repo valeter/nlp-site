@@ -4,9 +4,24 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>Разработка комплекса технологий и коммерческих продуктов нового поколения </title>
 <link href="css/style.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+ A {
+  text-decoration: none; /* Убирает подчеркивание для ссылок */
+  color: #106BB5;
+ } 
+ A:hover { 
+  text-decoration: underline; /* Добавляем подчеркивание при наведении курсора на ссылку */
+  color: red; /* Ссылка красного цвета */
+ } 
+</style>
+
 </head>
 
 <body class="oneColLiqCtrHdr">
+
+<?php
+require "auth.php";
+?>
 
 <div id="top_wrap">
 
@@ -17,12 +32,14 @@
   для обработки естественного языка на основе облачных вычислений</h1>
   <h2>По заказу Фонда содействия развитию малых форм предприятий <br />
   в научно-технической сфере. Контракт №10151р/17593 от 28.04.2012.</h2>
+
+  <p style="position: absolute; margin: -20px 70px; color: blue; font-size: 14px">
+    <a href="auth.php?do=logout">Выход</a>
+  </p>
   <!-- end #header --></div>
 </div>
 
 <div id="container">
-
-
 
 <div class="inner_block1">
 
@@ -60,7 +77,7 @@
     классификации научных текстов 
     в соответствии с классификаторами 
     УДК/ГРНТИ.</a>
-    <a href="http://nlp-systems.net/search/" id="block_2lang">Система двуязычного 
+    <a href="search/index.php" id="block_2lang">Система двуязычного 
     (русско-английский) метапоиска 
     в массиве научных публикаций 
     с разрешением многозначности 
