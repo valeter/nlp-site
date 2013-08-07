@@ -80,7 +80,7 @@ echo <<<END
  <div id="content" class="sidebar">
     <div id="sidebar">
     <div class="sidebarpic">
-    <a href="http://nlp-systems.ru/"><img src="picture/cloud.png" width="200px" alt="NLP@Cloud"/></a>
+    <a href="http://nlp-systems.net/"><img src="picture/cloud.png" width="200px" alt="NLP@Cloud"/></a>
     </div>
     <div class="sidebarpic">  
     <a href="http://mathnet.ru/ivm"><img src="picture/ivm.jpg" width="200px" alt="Math-Net.Ru Журнал &quot;Известия высших учебных заведений. Математика&quot;"/></a>
