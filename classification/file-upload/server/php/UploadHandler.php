@@ -938,7 +938,7 @@ class UploadHandler
                 );
             }
 
-            $command = '/usr/bin/python /var/www/classification/python/make_result_file.py';
+            $command = '/usr/bin/python /var/www/classification/python/stub.py';
 			$temp = exec($command, $output);
 
             for ($i = 0; $i < count($files); $i += 1) {	

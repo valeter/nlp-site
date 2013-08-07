@@ -33,9 +33,12 @@ def run_ie(filename):
 
 def run_command(command):
 	print command
-	process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-	output = process.communicate()[0]
-	print output
+	try:
+		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+		output = process.communicate()[0]
+		print output
+	except Exception, e:
+		print "Error while executing command: " + str(command)
 
 def get_bucket(s3_connection, bucket_name, create_new_bucket):
 	bucket = lookup_and_return_bucket(s3_connection, bucket_name)
@@ -126,104 +129,113 @@ def run_jobs():
 		oldnum = 0
 		print "Error while connectiong to old jobflow: " + str(e)
 
+	try:
+		for input_file in input_files:
+			if (".nlpresult" in str(input_file) or str(input_file).startswith('.')):
+				print str(input_file) + " skipped"
+				continue
 
-	for input_file in input_files:
-		if (".nlpresult" in str(input_file) or str(input_file).startswith('.')):
-			print str(input_file) + " skipped"
-			continue
+			print "Processing %s" % str(input_file)
+			taskid = str(oldnum + 1).strip() + str(i).strip()
+			input_folder = 'input' + taskid
+			mp = dirname(abspath(__file__)) + '/../../'
+			bsp = mp + 'boto-scripts/'
+			wfsp = bsp + 'write_file_to_aws.py '
+			write_input_files_command = wfsp + input_path + input_file + ' ' + b_name + ' ' + input_folder + '/' + input_file + ' false'
+			run_command(write_input_files_command)
 
-		print "Processing %s" % str(input_file)
-		taskid = str(oldnum + 1).strip() + str(i).strip()
-		input_folder = 'input' + taskid
-		mp = dirname(abspath(__file__)) + '/../../'
-		bsp = mp + 'boto-scripts/'
-		wfsp = bsp + 'write_file_to_aws.py '
-		write_input_files_command = wfsp + input_path + input_file + ' ' + b_name + ' ' + input_folder + '/' + input_file + ' false'
-		run_command(write_input_files_command)
+			os.remove(input_path + input_file)
 
-		os.remove(input_path + input_file)
+			start_time = time.time()
 
-		start_time = time.time()
+			bucket_name = b_name
 
-		bucket_name = b_name
+			preprocessing_step = JarStep(name='prerocessing-' + taskid,
+				jar='s3n://' + bucket_name + '/behemoth/behemoth-core.jar',
+				step_args=['com.digitalpebble.behemoth.util.CorpusGenerator',
+					'-i', 's3n://' + bucket_name + '/' + input_folder,
+					'-o', '/mnt/bcorpus' + taskid])
 
-		preprocessing_step = JarStep(name='prerocessing-' + taskid,
-			jar='s3n://' + bucket_name + '/behemoth/behemoth-core.jar',
-			step_args=['com.digitalpebble.behemoth.util.CorpusGenerator',
-				'-i', 's3n://' + bucket_name + '/' + input_folder,
-				'-o', '/mnt/bcorpus' + taskid])
+			tika_step = JarStep(name='tika-' + taskid,
+				jar='s3n://' + bucket_name + '/behemoth/behemoth-tika.jar',
+				step_args=['com.digitalpebble.behemoth.tika.TikaDriver',
+					'-i', '/mnt/bcorpus' + taskid,
+					'-o', '/mnt/tcorpus' + taskid])
 
-		tika_step = JarStep(name='tika-' + taskid,
-			jar='s3n://' + bucket_name + '/behemoth/behemoth-tika.jar',
-			step_args=['com.digitalpebble.behemoth.tika.TikaDriver',
-				'-i', '/mnt/bcorpus' + taskid,
-				'-o', '/mnt/tcorpus' + taskid])
+			copy_jar_step = JarStep(name='copy-jar-' + taskid,
+				jar='s3n://' + bucket_name + '/copy-to-hdfs.jar',
+				step_args=['s3n://' + bucket_name + '/pipeline.pear',
+					'/mnt/pipeline.pear'])
 
-		copy_jar_step = JarStep(name='copy-jar-' + taskid,
-			jar='s3n://' + bucket_name + '/copy-to-hdfs.jar',
-			step_args=['s3n://' + bucket_name + '/pipeline.pear',
-				'/mnt/pipeline.pear'])
+			uima_step = JarStep(name='uima-' + taskid,
+				jar='s3n://' + bucket_name + '/behemoth/behemoth-uima.jar',
+				step_args=['com.digitalpebble.behemoth.uima.UIMADriver',
+					'/mnt/tcorpus' + taskid,
+					'/mnt/ucorpus' + taskid,
+					'/mnt/pipeline.pear'])
 
-		uima_step = JarStep(name='uima-' + taskid,
-			jar='s3n://' + bucket_name + '/behemoth/behemoth-uima.jar',
-			step_args=['com.digitalpebble.behemoth.uima.UIMADriver',
-				'/mnt/tcorpus' + taskid,
-				'/mnt/ucorpus' + taskid,
-				'/mnt/pipeline.pear'])
+			steps = []
+			steps.append(preprocessing_step)
+			steps.append(tika_step)
+			steps.append(copy_jar_step)
+			steps.append(uima_step)
 
-		steps = []
-		steps.append(preprocessing_step)
-		steps.append(tika_step)
-		steps.append(copy_jar_step)
-		steps.append(uima_step)
+			if (first_time):
+				print "Starting new jobflow"
+				hadoop_params = ['-m','mapred.tasktracker.map.tasks.maximum=1',
+				          '-m', 'mapred.child.java.opts=-Xmx10g']
+				configure_hadoop_action = BootstrapAction('configure_hadoop', 's3://elasticmapreduce/bootstrap-actions/configure-hadoop', hadoop_params)
 
-		if (first_time):
-			print "Starting new jobflow"
-			hadoop_params = ['-m','mapred.tasktracker.map.tasks.maximum=1',
-			          '-m', 'mapred.child.java.opts=-Xmx10g']
-			configure_hadoop_action = BootstrapAction('configure_hadoop', 's3://elasticmapreduce/bootstrap-actions/configure-hadoop', hadoop_params)
+				jobid = emr_connection.run_jobflow(name='udk',
+					log_uri='s3://' + bucket_name + '/jobflow_logs',
+					master_instance_type='m2.xlarge',
+					slave_instance_type='m2.xlarge',
+					num_instances=2,
+					keep_alive=True,
+					enable_debugging=False,
+					bootstrap_actions=[configure_hadoop_action],
+					hadoop_version='1.0.3',
+					steps=steps)
+				first_time = False
+				with open(jffile, 'w') as f:
+					f.write(jobid +'\n')
+					f.write(str(1) +'\n')
+				print "Jobflow %s started" % jobid 
+			else:
+				emr_connection.add_jobflow_steps(jobid, steps)
+			i = i + 1
 
-			jobid = emr_connection.run_jobflow(name='udk',
-				log_uri='s3://' + bucket_name + '/jobflow_logs',
-				master_instance_type='m2.xlarge',
-				slave_instance_type='m2.xlarge',
-				num_instances=2,
-				keep_alive=True,
-				enable_debugging=False,
-				bootstrap_actions=[configure_hadoop_action],
-				hadoop_version='1.0.3',
-				steps=steps)
-			first_time = False
-			with open(jffile, 'w') as f:
-				f.write(jobid +'\n')
-				f.write(str(1) +'\n')
-			print "Jobflow %s started" % jobid 
-		else:
-			emr_connection.add_jobflow_steps(jobid, steps)
-		i = i + 1
+			termination_statuses = [u'COMPLETED', u'FAILED', u'TERMINATED', u'WAITING']
+			exit_status = None
+			while True:
+				time.sleep(30)
+				status = emr_connection.describe_jobflow(jobid)
+				if status.state in termination_statuses:
+					print 'Job finished for %s nodes' % str(i)
+					exit_status = status
+					break
+			print time.time() - start_time, ' seconds elapsed'
 
-		termination_statuses = [u'COMPLETED', u'FAILED', u'TERMINATED', u'WAITING']
-		exit_status = None
-		while True:
-			time.sleep(30)
-			status = emr_connection.describe_jobflow(jobid)
-			if status.state in termination_statuses:
-				print 'Job finished for %s nodes' % str(i)
-				exit_status = status
+			bucket = s3_connection.get_bucket(bucket_name)
+			bucket.delete_key(input_folder + '/' + input_file)
+			if (bucket.get_key(input_folder) != None):
+				bucket.delete_key(input_folder)
+
+			if (exit_status != None and exit_status.state != u'WAITING'):
+				print "Jobflow terminated too soon with status %s" % exit_status.state
 				break
-		print time.time() - start_time, ' seconds elapsed'
+			try:
+				run_ie(input_file)
+			except Exception, e:
+				print "Error on ie module: " + str(e)
+	except Exception, e:
+		print "Unsupposed error: " + str(e)
 
-		bucket = s3_connection.get_bucket(bucket_name)
-		bucket.delete_key(input_folder + '/' + input_file)
-		if (bucket.get_key(input_folder) != None):
-			bucket.delete_key(input_folder)
-
-		if (exit_status != None and exit_status.state != u'WAITING'):
-			print "Jobflow terminated too soon with status %s" % exit_status.state
-			break
-		run_ie(input_file)
-	emr_connection.terminate_jobflow(jobid)
-	print 'Jobflow terminated'
+	try:
+		emr_connection.terminate_jobflow(jobid)
+		print 'Jobflow terminated'
+	except Exception, e:
+		print "Error while terminating jobflow: " + str(e)
 
 
 if __name__ == "__main__":
