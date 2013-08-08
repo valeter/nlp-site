@@ -23,7 +23,7 @@ END;
 echo <<<END
 <form action="searchlog.php" method="get" name="searchsh">
 <p>
- <input type="text" name="q" size="64" value="$q1"/>
+ <input type="text" name="q" size="64" value="$q1" id="quer"/>
  <input type="submit" value="Поиск"/> 
  <input type="reset" value="Сброс"/> </p>
 END;
@@ -192,7 +192,7 @@ syncList1.dataList = {
 'colloc':'1',
 'theme':'2'
 };
-syncList1.sync("mean","colloc","theme");
+syncList1.sync("mean","colloc","theme", "quer");
 
 END;
 $snum=0;
