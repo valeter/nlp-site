@@ -130,21 +130,8 @@ def run_jobs():
 		print "Error while connectiong to old jobflow: " + str(e)
 
 	try:
-		used = {}
 		for input_file in input_files:
-			if str(input_file).startswith('.'):
-				used[input_file] = False
-				continue
-			elif ".nlpresult" in str(input_file):
-				short_name = str(input_file)[:-len(".nlpresult")]
-				used[short_name] = True
-				print "%s was already processed" % input_file
-			else:
-				used[input_file] = False
-
-
-		for input_file in input_files:
-			if (input_file.startswith('.') or ".nlpresult" in str(input_file) or used[input_file]):
+			if (input_file.startswith('.') or ".nlpresult" in str(input_file)):
 				print str(input_file) + " skipped"
 				continue
 
