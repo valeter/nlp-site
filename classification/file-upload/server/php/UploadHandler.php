@@ -261,6 +261,11 @@ class UploadHandler
     }
 
     protected function get_file_object($file_name) {
+        $file_ext = strtolower(substr($file_name, strrpos($file_name, '.') + 1));
+        if ($file_ext == "nlpresult") {
+            return null;
+        }
+
         if ($this->is_valid_file_object($file_name)) {
             $file = new stdClass();
             $file->name = $file_name;
@@ -279,6 +284,43 @@ class UploadHandler
                 }
             }
             $this->set_additional_file_properties($file);
+
+            $fin_file_name = $file_name;
+            $fdir = '/var/www/classification/file-upload/server/php/files/';
+            $result_arrays = array();
+            $udk = "wrong UDK";
+            $grnti = "wrong GRNTI";
+            if ($handle = opendir($fdir)) {
+                while (false !== ($fname = readdir($handle)))
+                {
+                    if ($fname == "." || $fname == ".." || $fname[0] == '.') 
+                    {
+                        continue;
+                    }
+
+                    $file_ext = strtolower(substr($fname, strrpos($fname, '.') + 1));
+                    
+                    if ($fname != "." && $fname != ".." && $file_ext == "nlpresult")
+                    {
+                        $real_file_name = substr($fname, 0, strlen($fname) - strlen($file_ext) - 1);
+                        $file_handle = fopen($fdir . $fname, "r");
+                        $lines = array();
+                        while (!feof($file_handle)) {
+                           $line = fgets($file_handle);
+                           array_push($lines, $line);
+                        }
+                        fclose($file_handle);
+                        if (strtolower(trim($real_file_name)) == strtolower(trim($fin_file_name))) 
+                        {
+                            $udk = $lines[0];
+                            $grnti = $lines[1];
+                        }
+                    }
+                }
+                closedir($handle);
+            }
+            $file->udk = $udk;
+            $file->grnti = $grnti;
             return $file;
         }
         return null;
@@ -676,11 +718,6 @@ class UploadHandler
         }
     }
 
-    protected function handle_file_udk($file, $udk) {
-    	$file->udk = $udk;
-    	return $file;
-    }
-
     protected function handle_file_upload($uploaded_file, $name, $size, $type, $error,
             $index = null, $content_range = null) {
         $file = new stdClass();
@@ -882,7 +919,7 @@ class UploadHandler
         $this->send_content_type_header();
     }
 
-    public function get($print_response = false) {
+    public function get($print_response = true) {
         if ($print_response && isset($_GET['download'])) {
             return $this->download();
         }
@@ -938,7 +975,7 @@ class UploadHandler
                 );
             }
 
-            $command = '/usr/bin/python /var/www/classification/python/stub.py';
+            $command = '/usr/bin/python /var/www/classification/python/make_result_file.py';
 			$temp = exec($command, $output);
 
             for ($i = 0; $i < count($files); $i += 1) {	
@@ -946,7 +983,8 @@ class UploadHandler
             	$fin_file_name = $names[$i];
             	$fdir = '/var/www/classification/file-upload/server/php/files/';
 				$result_arrays = array();
-				$udk = "wrond UDK";
+				$udk = "wrong UDK";
+                $grnti = "wrong GRNTI";
 				if ($handle = opendir($fdir)) {
 				    while (false !== ($fname = readdir($handle)))
 				    {
@@ -960,12 +998,17 @@ class UploadHandler
 				        if ($fname != "." && $fname != ".." && $file_ext == "nlpresult")
 				        {
 				        	$real_file_name = substr($fname, 0, strlen($fname) - strlen($file_ext) - 1);
-				        	//$udk = "(" . $real_file_name . ")(" . $fin_file_name . ")";
-				            $fcontent = file_get_contents($fdir . $fname);
-				            
+				            $file_handle = fopen($fdir . $fname, "r");
+                            $lines = array();
+                            while (!feof($file_handle)) {
+                               $line = fgets($file_handle);
+                               array_push($lines, $line);
+                            }
+                            fclose($file_handle);
 				            if (strtolower(trim($real_file_name)) == strtolower(trim($fin_file_name))) 
 				            {
-				            	$udk = $fcontent;
+				            	$udk = $lines[0];
+                                $grnti = $lines[1];
 				            }
 				        }
 				    }
@@ -973,6 +1016,7 @@ class UploadHandler
 				}
 
 				$files[$i]->udk = $udk;
+                $files[$i]->grnti = $grnti;
             }
         } else {
             // param_name is a single object identifier like "file",
@@ -990,6 +1034,7 @@ class UploadHandler
                 $content_range
             );
             $files[0]->udk = "error";
+            $files[0]->grnti = "error";
         }
 
 		$command = 'rm ' . $fdir . '*.nlpresult.nlpresult';
@@ -1007,7 +1052,8 @@ class UploadHandler
         $file_name = $this->get_file_name_param();
         $file_path = $this->get_upload_path($file_name);
         $success = is_file($file_path) && $file_name[0] !== '.' && unlink($file_path);
-        if ($success) {
+        $success2 = is_file($file_path . '.nlpresult') && $file_name[0] !== '.' && unlink($file_path . '.nlpresult');
+        if ($success && $success2) {
             foreach($this->options['image_versions'] as $version => $options) {
                 if (!empty($version)) {
                     $file = $this->get_upload_path($file_name, $version);

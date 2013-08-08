@@ -144,8 +144,6 @@ def run_jobs():
 			write_input_files_command = wfsp + input_path + input_file + ' ' + b_name + ' ' + input_folder + '/' + input_file + ' false'
 			run_command(write_input_files_command)
 
-			os.remove(input_path + input_file)
-
 			start_time = time.time()
 
 			bucket_name = b_name
