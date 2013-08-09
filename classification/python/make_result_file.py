@@ -69,8 +69,9 @@ def create_and_return_bucket(s3_connection, bucket_name):
 
 def run_ie(filename):
 	ie_root = dirname(abspath(__file__)) + '/../ie/'
-	result_filename = unicode(dirname(abspath(__file__))) + u"/../file-upload/server/php/files/" + unicode(filename) + u".nlpresult"
-	ie_cmd = u"java -jar " + unicode(ie_root) + u"InformationExtractionClassifier-0.1.jar " + unicode(ie_root) + u"dict/ " + unicode(result_filename)
+	result_filename = dirname(abspath(__file__)) + "/../file-upload/server/php/files/" + filename + ".nlpresult"
+	ie_cmd = "java -jar " + ie_root + "InformationExtractionClassifier-0.1.jar " + ie_root + "dict/ " + result_filename
+	print "Running IE on file: " + filename
 	run_command(ie_cmd)
 
 def run_command(command):
@@ -111,16 +112,18 @@ class Task(object):
 
 		try:
 			termination_statuses = [u'COMPLETED', u'FAILED', u'TERMINATED', u'SHUTTING_DOWN']
-		
-			self.old_jobflow = self.emr_connection.describe_jobflow(self.old_jobflow)
-			if (self.old_jobflow.state not in termination_statuses):
+			
+			old_flow = self.emr_connection.describe_jobflow(self.old_jobflow)
+			if old_flow == None:
+				print "Old flow not found"
+			if (old_flow.state not in termination_statuses):
 				print "Found working old jobflow"
 				self.start_cluster = False
 				self.jobflow_id = self.old_jobflow
 				with open(self.jffile, 'w') as f:
 					f.write(str(self.jobflow_id) +'\n')
 					f.write(str(self.old_num + 1) +'\n')
-				print "Connectiong to old jobflow"
+				print "Connecting to old jobflow"
 			else:
 				self.old_num = 0
 				print "Could not connect to old jobflow"
@@ -188,6 +191,7 @@ class Task(object):
 		with open(self.jffile, 'w') as f:
 			f.write(str(self.jobflow_id) +'\n')
 			f.write(str(self.old_num + 1) +'\n')
+		
 		print "Jobflow %s started" % self.jobflow_id
 
 	def wait_for_terminating(self):
@@ -231,7 +235,7 @@ class Task(object):
 
 			print time.time() - start_time, ' seconds elapsed'
 
-			bucket = s3_connection.get_bucket(self.bucket_name)
+			bucket = self.s3_connection.get_bucket(self.bucket_name)
 			bucket.delete_key(input_folder + '/' + self.short_filename)
 			
 			run_ie(self.short_filename)

@@ -975,16 +975,15 @@ class UploadHandler
                 );
             }
 
-            $command = '/usr/bin/python /var/www/classification/python/make_result_file.py';
-			$temp = exec($command, $output);
-
             for ($i = 0; $i < count($files); $i += 1) {	
             	$file = $files[$i];
             	$fin_file_name = $names[$i];
+            	$command = '/usr/bin/python /var/www/classification/python/make_result_file.py ' . $fin_file_name;
+				$temp = exec($command, $output);
             	$fdir = '/var/www/classification/file-upload/server/php/files/';
 				$result_arrays = array();
-				$udk = "wrong UDK";
-                $grnti = "wrong GRNTI";
+				$udk = $command;//"wrong UDK";
+                $grnti = $temp;//"wrong GRNTI";
 				if ($handle = opendir($fdir)) {
 				    while (false !== ($fname = readdir($handle)))
 				    {
