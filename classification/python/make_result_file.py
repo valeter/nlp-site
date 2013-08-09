@@ -13,32 +13,35 @@ from boto.emr.connection import EmrConnection
 from boto.emr.step import JarStep
 from boto.emr.bootstrap_action import BootstrapAction
 from boto.s3.key import Key
+import MySQLdb
 
-def get_result():
-	time.sleep(5)
-	#prepare_s3()
-	run_jobs()
+def prepare_s3(bucket_name):
+	try:
+		s3_connection = boto.connect_s3()
+		print 'Connection to S3 service established'
+		
+		bucket = get_bucket(s3_connection, bucket_name, create_and_return_bucket)
+		if (bucket == None):
+			print "There's no bucket with name %s" % bucket_name
+			return False
+		print 'Bucket was found'
+	except Exception, e:
+		print 'Could not establish connection to S3 service'
+		print e
+		return False
 
-def delete_bucket():
 	mp = dirname(abspath(__file__)) + '/../../'
 	bsp = mp + 'boto-scripts/'
-	command = bsp + "delete_bucket.py " + b_name
-	run_command(command)
+	wfsp = bsp + 'write_file_to_aws.py '
 
-def run_ie(filename):
-	ie_root = dirname(abspath(__file__)) + '/../ie/'
-	result_filename = dirname(abspath(__file__)) + "/../file-upload/server/php/files/" + filename + ".nlpresult"
-	ie_cmd = "java -jar " + ie_root + "InformationExtractionClassifier-0.1.jar" + " " + ie_root +"dict/ " + result_filename
-	run_command(ie_cmd)
-
-def run_command(command):
-	print command
-	try:
-		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-		output = process.communicate()[0]
-		print output
-	except Exception, e:
-		print "Error while executing command: " + str(command)
+	write_init_folder_commands = []
+	write_init_folder_commands.append(wfsp + mp + 'classification/pipeline.pear ' + bucket_name + ' pipeline.pear false')
+	write_init_folder_commands.append(wfsp + mp + 'behemoth/behemoth-core-1.1-SNAPSHOT-job.jar ' + bucket_name + ' behemoth/behemoth-core.jar false')
+	write_init_folder_commands.append(wfsp + mp + 'behemoth/behemoth-tika-1.1-SNAPSHOT-job.jar ' + bucket_name + ' behemoth/behemoth-tika.jar false')
+	write_init_folder_commands.append(wfsp + mp + 'behemoth/behemoth-uima-1.1-SNAPSHOT-job.jar ' + bucket_name + ' behemoth/behemoth-uima.jar false')
+	write_init_folder_commands.append(wfsp + mp + 'copy-to-hdfs.jar ' + bucket_name + ' copy-to-hdfs.jar false')
+	for command in write_init_folder_commands:
+		run_command(command)
 
 def get_bucket(s3_connection, bucket_name, create_new_bucket):
 	bucket = lookup_and_return_bucket(s3_connection, bucket_name)
@@ -64,190 +67,179 @@ def create_and_return_bucket(s3_connection, bucket_name):
 		print e
 		return None
 
-b_name = "udk-bucket"
+def run_ie(filename):
+	ie_root = dirname(abspath(__file__)) + '/../ie/'
+	result_filename = unicode(dirname(abspath(__file__))) + u"/../file-upload/server/php/files/" + unicode(filename) + u".nlpresult"
+	ie_cmd = u"java -jar " + unicode(ie_root) + u"InformationExtractionClassifier-0.1.jar " + unicode(ie_root) + u"dict/ " + unicode(result_filename)
+	run_command(ie_cmd)
 
-def prepare_s3():
-	b_name = 'udk-bucket'
+def run_command(command):
 	try:
-		s3_connection = boto.connect_s3()
-		print 'Connection to S3 service established'
-		
-		bucket = get_bucket(s3_connection, b_name, create_and_return_bucket)
-		if (bucket == None):
-			print "There's no bucket with name %s" % b_name
-			return False
-		print 'Bucket was found'
+		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+		output = process.communicate()[0]
+		print output
 	except Exception, e:
-		print 'Could not establish connection to S3 service'
-		print e
-		return False
+		print "Error while executing command: " + str(command)
 
-	mp = dirname(abspath(__file__)) + '/../../'
-	bsp = mp + 'boto-scripts/'
-	wfsp = bsp + 'write_file_to_aws.py '
+def main(args):
+	script_name, filename = args
+	task = Task(filename)
+	task.process()
 
-	write_init_folder_commands = []
-	write_init_folder_commands.append(wfsp + mp + 'classification/pipeline.pear ' + b_name + ' pipeline.pear false')
-	write_init_folder_commands.append(wfsp + mp + 'behemoth/behemoth-core-1.1-SNAPSHOT-job.jar ' + b_name + ' behemoth/behemoth-core.jar false')
-	write_init_folder_commands.append(wfsp + mp + 'behemoth/behemoth-tika-1.1-SNAPSHOT-job.jar ' + b_name + ' behemoth/behemoth-tika.jar false')
-	write_init_folder_commands.append(wfsp + mp + 'behemoth/behemoth-uima-1.1-SNAPSHOT-job.jar ' + b_name + ' behemoth/behemoth-uima.jar false')
-	write_init_folder_commands.append(wfsp + mp + 'copy-to-hdfs.jar ' + b_name + ' copy-to-hdfs.jar false')
-	for command in write_init_folder_commands:
-		run_command(command)
-
-def run_jobs():
-	input_path = dirname(abspath(__file__)) + "/../file-upload/server/php/files/"
-	input_files = [ f for f in listdir(input_path) if isfile(join(input_path,f)) ]
-
-	first_time = True
-	i = 1
-	jobid = -1
-	oldnum = 1
-
-	jffile = dirname(abspath(__file__)) + '/jffile'
-	with open(jffile, 'r') as f:
-		oldid = f.readline().strip()
-		oldnum = int(f.readline().strip())
-
+class Task(object):
+	foldername = ""
+	filename = ""
+	short_filename = ""
+	old_jobflow = -1
+	old_num = 1
+	start_cluster = True
+	jobflow_id = -1
+	bucket_name = "udk-bucket"
 	emr_connection = EmrConnection()
 	s3_connection = boto.connect_s3()
-	termination_statuses = [u'COMPLETED', u'FAILED', u'TERMINATED']
-	try:
-		oldflow = emr_connection.describe_jobflow(oldid)
-		if (oldflow.state not in termination_statuses):
-			print "Found working old jobflow %s" + str(oldflow)
-			first_time = False
-			jobid = oldid
-			with open(jffile, 'w') as f:
-				f.write(str(jobid) +'\n')
-				f.write(str(oldnum + 1) +'\n')
-			print "Connectiong to old jobflow %s" + str(jobid)
-		else:
-			oldnum = 0
-			print "Could not connect to old jobflow"
-	except Exception, e:
-		oldnum = 0
-		print "Error while connectiong to old jobflow: " + str(e)
+	jffile = dirname(abspath(__file__)) + '/jffile'
 
-	try:
-		used = {}
-		for input_file in input_files:
-			if str(input_file).startswith('.'):
-				used[input_file] = False
-				continue
-			elif ".nlpresult" in str(input_file):
-				short_name = str(input_file)[:-len(".nlpresult")]
-				used[short_name] = True
-				print "%s was already processed" % input_file
+	def __init__(self, f_name):
+		self.foldername = dirname(abspath(__file__)) + "/../file-upload/server/php/files/"
+		self.filename =  self.foldername + f_name
+		self.short_filename = f_name
+
+	def read_old_jobflow_params(self):		
+		with open(self.jffile, 'r') as f:
+			self.old_jobflow = f.readline().strip()
+			self.old_num = int(f.readline().strip())
+
+		try:
+			termination_statuses = [u'COMPLETED', u'FAILED', u'TERMINATED', u'SHUTTING_DOWN']
+		
+			self.old_jobflow = self.emr_connection.describe_jobflow(self.old_jobflow)
+			if (self.old_jobflow.state not in termination_statuses):
+				print "Found working old jobflow"
+				self.start_cluster = False
+				self.jobflow_id = self.old_jobflow
+				with open(self.jffile, 'w') as f:
+					f.write(str(self.jobflow_id) +'\n')
+					f.write(str(self.old_num + 1) +'\n')
+				print "Connectiong to old jobflow"
 			else:
-				used[input_file] = False
+				self.old_num = 0
+				print "Could not connect to old jobflow"
+		except Exception, e:
+			self.old_num = 0
+			print "Error while connectiong to old jobflow: " + str(e)
 
+	def write_file_to_aws(self, key_name):
+		mp = dirname(abspath(__file__)) + '/../../'
+		bsp = mp + 'boto-scripts/'
+		wfsp = bsp + 'write_file_to_aws.py '
+		write_input_files_command = wfsp + self.filename + ' ' + self.bucket_name + ' ' + key_name + ' false'
+		run_command(write_input_files_command)
 
-		for input_file in input_files:
-			if (input_file.startswith('.') or ".nlpresult" in str(input_file) or used[input_file]):
-				print str(input_file) + " skipped"
-				continue
+	def get_steps(self, taskid, input_folder):
+		preprocessing_step = JarStep(name='prerocessing-' + taskid,
+			jar='s3n://' + self.bucket_name + '/behemoth/behemoth-core.jar',
+			step_args=['com.digitalpebble.behemoth.util.CorpusGenerator',
+				'-i', 's3n://' + self.bucket_name + '/' + input_folder,
+				'-o', '/mnt/bcorpus' + taskid])
 
-			print "Processing %s" % str(input_file)
-			taskid = str(oldnum + 1).strip() + str(i).strip()
+		tika_step = JarStep(name='tika-' + taskid,
+			jar='s3n://' + self.bucket_name + '/behemoth/behemoth-tika.jar',
+			step_args=['com.digitalpebble.behemoth.tika.TikaDriver',
+				'-i', '/mnt/bcorpus' + taskid,
+				'-o', '/mnt/tcorpus' + taskid])
+
+		copy_jar_step = JarStep(name='copy-jar-' + taskid,
+			jar='s3n://' + self.bucket_name + '/copy-to-hdfs.jar',
+			step_args=['s3n://' + self.bucket_name + '/pipeline.pear',
+				'/mnt/pipeline.pear'])
+
+		uima_step = JarStep(name='uima-' + taskid,
+			jar='s3n://' + self.bucket_name + '/behemoth/behemoth-uima.jar',
+			step_args=['com.digitalpebble.behemoth.uima.UIMADriver',
+				'/mnt/tcorpus' + taskid,
+				'/mnt/ucorpus' + taskid,
+				'/mnt/pipeline.pear'])
+
+		steps = []
+		steps.append(preprocessing_step)
+		steps.append(tika_step)
+		if self.start_cluster:
+			steps.append(copy_jar_step)
+		steps.append(uima_step)
+
+		return steps
+
+	def start_hadoop_cluster(self, steps):
+		print "Starting new jobflow"
+		hadoop_params = ['-m','mapred.tasktracker.map.tasks.maximum=1',
+		          '-m', 'mapred.child.java.opts=-Xmx10g']
+		configure_hadoop_action = BootstrapAction('configure_hadoop', 's3://elasticmapreduce/bootstrap-actions/configure-hadoop', hadoop_params)
+
+		self.jobflow_id = self.emr_connection.run_jobflow(name='udk',
+			log_uri='s3://' + self.bucket_name + '/jobflow_logs',
+			master_instance_type='m2.xlarge',
+			slave_instance_type='m2.xlarge',
+			num_instances=2,
+			enable_debugging=False,
+			bootstrap_actions=[configure_hadoop_action],
+			hadoop_version='1.0.3',
+			steps=steps)
+
+		with open(self.jffile, 'w') as f:
+			f.write(str(self.jobflow_id) +'\n')
+			f.write(str(self.old_num + 1) +'\n')
+		print "Jobflow %s started" % self.jobflow_id
+
+	def wait_for_terminating(self):
+		l = 0
+		while(True):
+			try:
+				db = MySQLdb.connect(host="192.241.150.164", user="root", passwd="tatishev5.4", db="nlp_systems", charset='utf8')
+				cursor = db.cursor()			
+				sql = """SELECT * FROM classification"""
+				cursor.execute(sql)
+				data =  cursor.fetchall()
+				if len(data) != 0:
+					break
+
+				db.close()
+			except Exception, e:
+				l = l + 1
+				if l == 10:
+					break
+				print "DB error: " + str(e)
+
+	def process(self):
+		try:
+			print "Processing %s" % str(self.short_filename)
+			
+			self.read_old_jobflow_params()
+
+			taskid = str(self.old_num + 1).strip()
 			input_folder = 'input' + taskid
-			mp = dirname(abspath(__file__)) + '/../../'
-			bsp = mp + 'boto-scripts/'
-			wfsp = bsp + 'write_file_to_aws.py '
-			write_input_files_command = wfsp + input_path + input_file + ' ' + b_name + ' ' + input_folder + '/' + input_file + ' false'
-			run_command(write_input_files_command)
-
+			self.write_file_to_aws(input_folder + "/" + self.short_filename)
+			
 			start_time = time.time()
 
-			bucket_name = b_name
-
-			preprocessing_step = JarStep(name='prerocessing-' + taskid,
-				jar='s3n://' + bucket_name + '/behemoth/behemoth-core.jar',
-				step_args=['com.digitalpebble.behemoth.util.CorpusGenerator',
-					'-i', 's3n://' + bucket_name + '/' + input_folder,
-					'-o', '/mnt/bcorpus' + taskid])
-
-			tika_step = JarStep(name='tika-' + taskid,
-				jar='s3n://' + bucket_name + '/behemoth/behemoth-tika.jar',
-				step_args=['com.digitalpebble.behemoth.tika.TikaDriver',
-					'-i', '/mnt/bcorpus' + taskid,
-					'-o', '/mnt/tcorpus' + taskid])
-
-			copy_jar_step = JarStep(name='copy-jar-' + taskid,
-				jar='s3n://' + bucket_name + '/copy-to-hdfs.jar',
-				step_args=['s3n://' + bucket_name + '/pipeline.pear',
-					'/mnt/pipeline.pear'])
-
-			uima_step = JarStep(name='uima-' + taskid,
-				jar='s3n://' + bucket_name + '/behemoth/behemoth-uima.jar',
-				step_args=['com.digitalpebble.behemoth.uima.UIMADriver',
-					'/mnt/tcorpus' + taskid,
-					'/mnt/ucorpus' + taskid,
-					'/mnt/pipeline.pear'])
-
-			steps = []
-			steps.append(preprocessing_step)
-			steps.append(tika_step)
-			steps.append(copy_jar_step)
-			steps.append(uima_step)
-
-			if (first_time):
-				print "Starting new jobflow"
-				hadoop_params = ['-m','mapred.tasktracker.map.tasks.maximum=1',
-				          '-m', 'mapred.child.java.opts=-Xmx10g']
-				configure_hadoop_action = BootstrapAction('configure_hadoop', 's3://elasticmapreduce/bootstrap-actions/configure-hadoop', hadoop_params)
-
-				jobid = emr_connection.run_jobflow(name='udk',
-					log_uri='s3://' + bucket_name + '/jobflow_logs',
-					master_instance_type='m2.xlarge',
-					slave_instance_type='m2.xlarge',
-					num_instances=2,
-					keep_alive=True,
-					enable_debugging=False,
-					bootstrap_actions=[configure_hadoop_action],
-					hadoop_version='1.0.3',
-					steps=steps)
-				first_time = False
-				with open(jffile, 'w') as f:
-					f.write(jobid +'\n')
-					f.write(str(1) +'\n')
-				print "Jobflow %s started" % jobid 
+			steps = self.get_steps(taskid, input_folder)
+			if self.start_cluster:
+				self.start_hadoop_cluster(steps)
 			else:
-				emr_connection.add_jobflow_steps(jobid, steps)
-			i = i + 1
+				self.emr_connection.add_jobflow_steps(self.jobflow_id, steps)
 
-			termination_statuses = [u'COMPLETED', u'FAILED', u'TERMINATED', u'WAITING']
-			exit_status = None
-			while True:
-				time.sleep(30)
-				status = emr_connection.describe_jobflow(jobid)
-				if status.state in termination_statuses:
-					print 'Job finished for %s nodes' % str(i)
-					exit_status = status
-					break
+			self.wait_for_terminating()
+
 			print time.time() - start_time, ' seconds elapsed'
 
-			bucket = s3_connection.get_bucket(bucket_name)
-			bucket.delete_key(input_folder + '/' + input_file)
-			if (bucket.get_key(input_folder) != None):
-				bucket.delete_key(input_folder)
-
-			if (exit_status != None and exit_status.state != u'WAITING'):
-				print "Jobflow terminated too soon with status %s" % exit_status.state
-				break
-			try:
-				run_ie(input_file)
-			except Exception, e:
-				print "Error on ie module: " + str(e)
-	except Exception, e:
-		print "Unsupposed error: " + str(e)
-
-	try:
-		emr_connection.terminate_jobflow(jobid)
-		print 'Jobflow terminated'
-	except Exception, e:
-		print "Error while terminating jobflow: " + str(e)
+			bucket = s3_connection.get_bucket(self.bucket_name)
+			bucket.delete_key(input_folder + '/' + self.short_filename)
+			
+			run_ie(self.short_filename)
+		except Exception, e:
+			print "Unsupposed error: " + str(e)
 
 
 if __name__ == "__main__":
-    get_result()
+	args = sys.argv
+	main(args)
+	sys.exit()
