@@ -1,4 +1,14 @@
 <?php
+function clear_empty_fields($list){
+	sort($list);
+	$a=array_search("",$list);	
+	if ($a===False){
+		return $list;
+	}else{	
+		array_splice($list,$a,1);
+		return $list;
+	}
+}
 function suggest_by_meaning($query)
 {
 	$vbp=0;	
@@ -12,6 +22,7 @@ function suggest_by_meaning($query)
 		$wquery="synset_label_RUS:(".$word.") OR sense_label_RUS:(".$word.") OR lf_label_RUS:(".$word.")";
 	}
 	$response = $wnsolr->search( $wquery, 0, 10);
+	//print_r($response);
 	if ($response->response->numFound>0){
 		foreach ( $response->response->docs as $doc ) { 
 			if ($lang=="e"){
@@ -38,8 +49,7 @@ function suggest_by_meaning($query)
 		return "error38";
 	} else {
 		$num=0;
-		$w2list=array_unique($wlist);
-		//print_r($w2list);
+		$w2list=clear_empty_fields(array_unique($wlist));
 		foreach ( $w2list as $word ) { 
 			if ($lang=="r"){
 				$wquery="synset_label:(".$word.") OR sense_label:(".$word.") OR lf_label:(".$word.")";
@@ -69,7 +79,7 @@ function suggest_by_meaning($query)
 	if ($vbp==1) {
 		return "error70";
 	} else {
-		return array_unique($rlist);
+		return clear_empty_fields(array_unique($rlist));
 	}
 }
 ?>

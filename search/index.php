@@ -11,13 +11,26 @@
 <body>
 <div id="wrapper">	
 <div id="wrapper2">	
-<div style="padding-top: 10%;">
+<div>
 <?php
   require_once( 'request.php' );
 ?>
+<div style="padding: 10%;">
+	Уважаемый пользователь! Система кросс-поиска работает в демо-режиме. В настоящий момент проработаны двуязычные запросы по ключевым словам, относящимся к тематике организаций. <br/>
+	Примеры запросов:<br/>
+	<a href="searchlog.php?q=миссия&m=нет&l=l&e=e">миссия</a>	<br/>
+	<a href="searchlog.php?q=academy&m=нет&l=l&e=e">academy</a>	<br/>
+	<a href="searchlog.php?q=institute&m=polytechnic+institute&l=l&e=e">institute->polytechnic institute</a>	<br/>
+	
+	
+	
+	
+	
+</div>
 </div>
 </div>
 </div>	
 <?php
   require_once( 'footer.php' );
 ?>
+
