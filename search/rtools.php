@@ -1,14 +1,5 @@
 <?php
-function clear_empty_fields($list){
-	sort($list);
-	$a=array_search("",$list);	
-	if ($a===False){
-		return $list;
-	}else{	
-		array_splice($list,$a,1);
-		return $list;
-	}
-}
+
 function suggest_by_meaning($query)
 {
 	$vbp=0;	

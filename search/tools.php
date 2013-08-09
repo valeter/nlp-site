@@ -1,4 +1,14 @@
 <?php
+function clear_empty_fields($list){
+	sort($list);
+	$a=array_search("",$list);	
+	if ($a===False){
+		return $list;
+	}else{	
+		array_splice($list,$a,1);
+		return $list;
+	}
+}
 function ordutf8($string, &$offset) {
     $code = ord(substr($string, $offset,1));
     if ($code >= 128) {

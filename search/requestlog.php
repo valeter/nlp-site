@@ -1,5 +1,6 @@
 <?php
 require_once( 'rtools.php' );
+require_once( "tools.php" );
 require_once( '../Apache/Solr/Service2.php' );
 
 if (isset($_GET['q'])) {
@@ -17,7 +18,7 @@ echo <<<END
 <a href="index.php">
 <img src="picture/mabi87.png" width="40%" alt="nlp-cloud"/>
 </a><br/>
-Система двуязычного (русско-английский) поиска <br />
+Система двуязычного (русско-английский, русско-английский) поиска <br />
 в массиве научных публикаций с разрешением многозначности запросов <br />
 END;
 echo <<<END

@@ -10,7 +10,11 @@ function preparequery($query2)
 	$trans = array("(" => " ", ")" => " ", " AND " => " ");
 	$oquery=trim(strtr($list[0],$trans)).' | ';
 	foreach ($list2 as $word) {
-		$oquery.=trim(strtr(substr($word,0,strpos($word,' OR ')),$trans)).' ';
+		if (strpos($word,' OR ')===FALSE){
+			$oquery.=trim(strtr($word,$trans)).' ';
+		}else{
+			$oquery.=trim(strtr(substr($word,0,strpos($word,' OR ')),$trans)).' ';
+		}
 	}
 	return $oquery;
 }
@@ -30,12 +34,19 @@ function generatequery($query,$focus)
 			$wquery="synset_label_RUS:".$word." OR sense_label_RUS:".$word." OR lf_label_RUS:".$word;
 		}
 		$response = $wnsolr->search( $wquery, 0, 1);
+		$nlist=array();
 		if ($response->response->numFound>0){
 			if ($lang=="e"){
-				$wlist[$num]="(".$response->response->docs[0]->synset_label_RUS." OR ".$response->response->docs[0]->sense_label_RUS." OR ".$response->response->docs[0]->lf_label_RUS.")";
+				$nlist[0]=$response->response->docs[0]->synset_label_RUS;
+				$nlist[1]=$response->response->docs[0]->sense_label_RUS;
+				$nlist[2]=$response->response->docs[0]->lf_label_RUS;
 			}else{
-				$wlist[$num]="(".$response->response->docs[0]->synset_label." OR ".$response->response->docs[0]->sense_label." OR ".$response->response->docs[0]->lf_label.")";
+				$nlist[0]=$response->response->docs[0]->synset_label;
+				$nlist[1]=$response->response->docs[0]->sense_label;
+				$nlist[2]=$response->response->docs[0]->lf_label;
 			}
+			$nlist=clear_empty_fields(array_unique($nlist));
+			$wlist[$num]="(".implode(" OR ",$nlist).")";
 		}else{
 			$wlist[$num]="ERROR!";
 			$vbp=1;
@@ -64,12 +75,19 @@ function generatequery($query,$focus)
 			$wquery="synset_label_RUS:(".$word.") OR sense_label_RUS:(".$word.") OR lf_label_RUS:(".$word.")";
 		}
 	$response = $wnsolr->search( $wquery, 0, 1);
-	if ($response->response->numFound>0){
-		if ($lang=="e"){
-			$wlist[$num]="(".$response->response->docs[0]->synset_label_RUS." OR ".$response->response->docs[0]->sense_label_RUS." OR ".$response->response->docs[0]->lf_label_RUS.")";
-		}else{
-			$wlist[$num]="(".$response->response->docs[0]->synset_label." OR ".$response->response->docs[0]->sense_label." OR ".$response->response->docs[0]->lf_label.")";
-		}
+	$nlist=array();
+		if ($response->response->numFound>0){
+			if ($lang=="e"){
+				$nlist[0]=$response->response->docs[0]->synset_label_RUS;
+				$nlist[1]=$response->response->docs[0]->sense_label_RUS;
+				$nlist[2]=$response->response->docs[0]->lf_label_RUS;
+			}else{
+				$nlist[0]=$response->response->docs[0]->synset_label;
+				$nlist[1]=$response->response->docs[0]->sense_label;
+				$nlist[2]=$response->response->docs[0]->lf_label;
+			}
+			$nlist=clear_empty_fields(array_unique($nlist));
+			$wlist[$num]="(".implode(" OR ",$nlist).")";
 	}else{
 		$wlist[$num]="ERROR!";
 		$vbp=1;
@@ -170,9 +188,9 @@ function generatequery($query,$focus)
   $params['hl.fragsize']='500';
   $params['q.op']='AND';
   $limit=10;
-  //echo "<pre>$query3s</pre>";
+  //echo "<pre>$query2</pre>";
   $response = $solr->search( $query2, $offset, $limit, $params);
-  //echo "<pre>$response</pre>"
+  //echo "<pre>$response</pre>";
   if ( $response->getHttpStatus() == 200 ) { 	
 	  echo "<div>\n";
       echo "Результаты поиска по запросу: ".$oquery." <br/>\n";      

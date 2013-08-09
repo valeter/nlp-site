@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<title>
-		Поиск по математическим статьям
+		Кросс-поиск
 	</title>
 <meta http-equiv='Content-Type' content='application/xhtml+xml; charset=UTF-8'/>
 <link type="text/css" rel="stylesheet" href="../css/results.css"/>
