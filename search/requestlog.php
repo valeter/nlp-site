@@ -9,6 +9,11 @@ if (isset($_GET['q'])) {
     $q1 = "";
 }
 $meanings=suggest_by_meaning($q1);
+$flag=suggest_from_dictionary($q1,$collocations,$themes);
+if ($flag===false){
+	$collocations=array();
+	$themes=array();
+}
 //$collocations=$meanings;
 //$themes=$meanings;
 //print_r($meanings);
@@ -45,7 +50,7 @@ END;
 echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Значение</legend>'."\n";
-echo '<select size="7" name="m" class="soption" id="mean">'."\n";
+echo '<select size="7" name="m" class="soption" id="mean" onchange="this.form.submit();">'."\n";
 $vbp[0]=0;
 if (isset($_GET['m'])) {
 	$m1=$_GET['m'];
@@ -84,7 +89,7 @@ echo '</td>'."\n";
 echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Словосочетание</legend>'."\n";
-echo '<select size="7" name="c" class="soption" id="colloc" disabled="disabled">'."\n";
+echo '<select size="7" name="c" class="soption" id="colloc" onchange="this.form.submit();">'."\n";
 $vbp[1]=0;
 if (isset($_GET['c'])) {
 	$c1=$_GET['c'];
@@ -117,12 +122,12 @@ echo "</td>\n";
 #
 
 # 
-#display themess
+#display themes
 #
 echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Тема</legend>'."\n";
-echo '<select size="7" name="t" class="soption" id="theme" disabled="disabled">'."\n";
+echo '<select size="7" name="t" class="soption" id="theme" onchange="this.form.submit();">'."\n";
 $vbp[2]=0;
 if (isset($_GET['t'])) {
 	$t1=$_GET['t'];
@@ -187,22 +192,13 @@ echo "</div>"."\n";
 echo <<<END
 <script type="text/javascript">
 var syncList1 = new syncList;
-syncList1.selectList = new Array( 'mean', 'colloc', 'theme');
+syncList1.selectList = new Array( 'quer','mean', 'colloc', 'theme');
 syncList1.dataList = {
 'mean':'0',
 'colloc':'1',
 'theme':'2'
 };
-syncList1.sync("mean","colloc","theme", "quer");
-
+syncList1.sync("quer");
+</script>'
 END;
-$snum=0;
-for ($i=0;$i<=2;$i++){
-	if ($vbp[$i]==1) {
-		$snum=$i;
-	}
-}
-echo "syncList1._init(syncList1.selectList[$snum]);"."\n";
-echo '</script>'."\n";
-
 ?>

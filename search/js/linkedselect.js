@@ -11,6 +11,6 @@ syncList.prototype._init = function (firstSelectId)
 
 syncList.prototype._sync = function (firstSelectId)
 {
-	//for (key in this.dataList || null) if (key!=firstSelectId) document.getElementById(key).selectedIndex=0;
+	for (key in this.dataList || null) if (key!=firstSelectId) document.getElementById(key).selectedIndex=0;
 	document.getElementById(firstSelectId).form.submit();
 };

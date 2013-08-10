@@ -1,5 +1,41 @@
 <?php
-
+require_once( "tools.php" );
+function suggest_from_dictionary($query,&$clist,&$tlist)
+{
+	$dsolr = new Apache_Solr_Service( 'localhost', '8983', '/solr/collection8' );
+	$lsolr = new Apache_Solr_Service( 'localhost', '8983', '/solr/collection7' );
+	$clist1=array();
+	$tlist1=array();
+	$lang=detectlanguage($query);	
+	if ($lang=="e"){
+		$wquery="word_en:(".$query.")";
+	} else {
+		$wquery="word:(".$query.")";
+	}
+	
+	$response = $dsolr->search( $wquery, 0, 100);
+	if ($response->response->numFound>0){
+		foreach ( $response->response->docs as $doc ) { 
+			$tlist1[]=$doc->label;
+			if ($lang=="e"){
+				$clist1[]=$doc->collocation_en;
+			}else{
+				$clist1[]=$doc->collocation;
+			}
+		}
+		$clist=clear_empty_fields(array_unique($clist1));
+		$tlist2=clear_empty_fields(array_unique($tlist1));
+		foreach ($tlist2 as $label){
+			$lquery="label:".$label;
+			$response = $lsolr->search( $lquery, 0, 1);
+			$tlist[]=$doc->text;
+		return true;
+		}
+	}else{
+		return false;
+	}
+	
+}
 function suggest_by_meaning($query)
 {
 	$vbp=0;	
