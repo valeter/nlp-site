@@ -3,7 +3,7 @@
 echo <<<END
 <div class="query_string">
 <a href="index.php">
-<img src="picture/mabi87.png" width="40%" alt="nlp-cloud"/>
+<img src="picture/mabi87.png" width="25%" alt="nlp-cloud"/>
 </a><br/>
 Система двуязычного (русско-английский, англо-русский) поиска <br />
 в массиве научных публикаций с разрешением многозначности запросов <br />
