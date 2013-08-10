@@ -5,7 +5,7 @@ echo <<<END
 <a href="index.php">
 <img src="picture/mabi87.png" width="40%" alt="nlp-cloud"/>
 </a><br/>
-Система двуязычного (русско-английский, русско-английский) поиска <br />
+Система двуязычного (русско-английский, англо-русский) поиска <br />
 в массиве научных публикаций с разрешением многозначности запросов <br />
 END;
 if (isset($_GET['q'])) {
@@ -35,7 +35,7 @@ echo <<<END
 		<td class="focus_element">Тема</td>
 		<td class="focus_element" align="left">
         <input type="checkbox" name="l" value="l" checked="checked" />Результаты на русском <br/>
-        <input type="checkbox" name="e" value="e" checked="checked" />Результаты на английском'
+        <input type="checkbox" name="e" value="e" checked="checked" />Результаты на английском
 END;
 
 echo <<<END
