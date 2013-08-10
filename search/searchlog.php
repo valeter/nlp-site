@@ -121,15 +121,47 @@ function generatequery($query,$focus)
   }
   $focus=0;
   $query2=$query;
-  if (isset($_GET['m'])){
+
+  
+  $state=0;
+if (isset($_GET['m'])) {
 	$m1=$_GET['m'];
 	if ($m1!='нет'){
-		$query2=$m1;
-		$focus=1;
+		$state+=4;
 	}
-  }
+}
+if (isset($_GET['c'])) {
+	$c1=$_GET['c'];
+	if ($c1!='нет'){
+		$state+=2;
+	}
+}
+if (isset($_GET['t'])) {
+	$t1=$_GET['t'];
+	if ($t1!='нет'){
+		$state+=1;
+	}
+}
+
+switch ($state){
+	case 0:		
+	break;
+	case 1:
+	break;
+	case 2:
+	break;
+	case 3:
+	break;
+	case 4:		
+	break;
+	case 5:
+	break;
+	case 6:
+	break;
+	case 7:
+	break;
+}
   
-  $sort="s";
   if (isset($_GET['o'])){
     $offset=$_GET['o'];
     if ($offset==""){

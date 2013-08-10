@@ -8,12 +8,102 @@ if (isset($_GET['q'])) {
 } else {
     $q1 = "";
 }
-$meanings=suggest_by_meaning($q1);
-$flag=suggest_from_dictionary($q1,$collocations,$themes);
-if ($flag===false){
-	$collocations=array();
-	$themes=array();
+$state=0;
+if (isset($_GET['m'])) {
+	$m1=$_GET['m'];
+	if ($m1!='нет'){
+		$state+=4;
+	}
 }
+if (isset($_GET['c'])) {
+	$c1=$_GET['c'];
+	if ($c1!='нет'){
+		$state+=2;
+	}
+}
+if (isset($_GET['t'])) {
+	$t1=$_GET['t'];
+	if ($t1!='нет'){
+		$state+=1;
+	}
+}
+switch ($state){
+	case 0:
+		$meanings=suggest_by_meaning($q1);
+		$flag=suggest_from_dictionary($q1,$collocations,$themes);
+		if ($flag===false){
+			$collocations=array();
+			$themes=array();
+		}
+	break;
+	case 1:
+		$themes=array();
+		$themes[]=$t1;
+		$flag=suggest_by_using_theme($q1,$t1,$meanings,$collocations);
+		if ($flag===false){
+			$collocations=array();
+			$meanings=array();
+		}
+	break;
+	case 2:
+		$collocations=array();
+		$collocations[]=$c1;
+		$flag=suggest_by_using_collocation($q1,$c1,$meanings,$themes);
+		if ($flag===false){
+			$meanings=array();
+			$themes=array();
+		}
+	break;
+	case 3:
+		$themes=array();
+		$themes[]=$t1;
+		$collocations=array();
+		$collocations[]=$c1;
+		$flag=suggest_meaning($q1,$c1,$t1,$meanings);
+		if ($flag===false){
+			$meanings=array();
+		}
+	break;
+	case 4:
+		$meanings=array();
+		$meanings[]=$m1;
+		$flag=suggest_from_dictionary($m1,$collocations,$themes);
+		if ($flag===false){
+			$collocations=array();
+			$themes=array();
+		}
+	break;
+	case 5:
+		$themes=array();
+		$themes[]=$t1;
+		$meanings=array();
+		$meanings[]=$m1;
+		$flag=suggest_by_using_theme1($m1,$t1,$collocations);
+		if ($flag===false){
+			$collocations=array();
+		}
+	break;
+	case 6:	
+		$collocations=array();
+		$collocations[]=$c1;
+		$meanings=array();
+		$meanings[]=$m1;
+		$flag=suggest_by_using_collocation1($m1,$c1,$themes);
+		if ($flag===false){
+			$themes=array();
+		}
+	break;
+	case 7:
+		$themes=array();
+		$themes[]=$t1;
+		$meanings=array();
+		$meanings[]=$m1;
+		$collocations=array();
+		$collocations[]=$c1;
+	break;
+}
+
+
 //$collocations=$meanings;
 //$themes=$meanings;
 //print_r($meanings);
