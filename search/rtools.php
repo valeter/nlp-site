@@ -6,6 +6,7 @@ function suggest_from_dictionary($query,&$clist,&$tlist)
 	$lsolr = new Apache_Solr_Service( 'localhost', '8983', '/solr/collection7' );
 	$clist1=array();
 	$tlist1=array();
+	$tlist3=array();
 	$lang=detectlanguage($query);	
 	if ($lang=="e"){
 		$wquery="word_en:(".$query.")";
@@ -28,9 +29,10 @@ function suggest_from_dictionary($query,&$clist,&$tlist)
 		foreach ($tlist2 as $label){
 			$lquery="label:".$label;
 			$response = $lsolr->search( $lquery, 0, 1);
-			$tlist[]=$doc->text;
-		return true;
+			$tlist3[]=$response->response->docs[0]->text;
 		}
+		$tlist=clear_empty_fields(array_unique($tlist3));
+		return true;
 	}else{
 		return false;
 	}
