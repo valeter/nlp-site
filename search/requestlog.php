@@ -121,7 +121,9 @@ echo <<<END
 <p>
  <input type="text" name="q" size="64" value="$q1" id="quer"/>
  <input type="submit" value="Поиск"/> 
- <input type="reset" value="Сброс"/> </p>
+ <input type="button" value="Сброс" onclick="window.location='index.php'"/>
+ <a href="help.pdf">?</a>
+ </p>
 END;
 
 
@@ -289,6 +291,6 @@ syncList1.dataList = {
 'theme':'2'
 };
 syncList1.sync("quer");
-</script>'
+</script>
 END;
 ?>

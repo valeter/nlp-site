@@ -18,7 +18,9 @@ echo <<<END
 <p>
  <input type="text" name="q" size="64" value="$q1"/>
  <input type="submit" value="Поиск"/> 
- <input type="reset" value="Сброс"/> </p>
+ <input type="reset" value="Сброс"/> 
+ <a href="help.pdf">?</a>
+ </p>
 END;
 
 

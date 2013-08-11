@@ -1,6 +1,7 @@
 <?php
-require_once("./tools.php");
-require_once("./interface.php");
+require_once("tools.php");
+require_once("interface.php");
+require_once("query.php");
 
 
 function preparequery($query2)
@@ -18,97 +19,6 @@ function preparequery($query2)
 	}
 	return $oquery;
 }
-
-function generatequery($query,$focus)
-{
-	if ($focus==0){
-	$list=explode(" ",$query);
-	$vbp=0;	
-	$wnsolr = new Apache_Solr_Service( 'localhost', '8983', '/solr/collection4' );
-	$lang=detectlanguage($query);	
-	$num=0;
-	foreach ( $list as $word ) { 
-		if ($lang=="e"){
-			$wquery="synset_label:".$word." OR sense_label:".$word." OR lf_label:".$word;
-		} else {
-			$wquery="synset_label_RUS:".$word." OR sense_label_RUS:".$word." OR lf_label_RUS:".$word;
-		}
-		$response = $wnsolr->search( $wquery, 0, 1);
-		$nlist=array();
-		if ($response->response->numFound>0){
-			if ($lang=="e"){
-				$nlist[0]=$response->response->docs[0]->synset_label_RUS;
-				$nlist[1]=$response->response->docs[0]->sense_label_RUS;
-				$nlist[2]=$response->response->docs[0]->lf_label_RUS;
-			}else{
-				$nlist[0]=$response->response->docs[0]->synset_label;
-				$nlist[1]=$response->response->docs[0]->sense_label;
-				$nlist[2]=$response->response->docs[0]->lf_label;
-			}
-			$nlist=clear_empty_fields(array_unique($nlist));
-			$wlist[$num]="(".implode(" OR ",$nlist).")";
-		}else{
-			$wlist[$num]="ERROR!";
-			$vbp=1;
-		}
-		$num++;
-		
-	}
-	if ($vbp==0){
-		$q2=implode(" AND ",$list);
-		$q3=implode(" AND ",$wlist);
-		$q="((".$q2.") OR (".$q3."))";
-		return $q;
-	}else{
-		return "error286";	
-	}
-}else{
-	$vbp=0;	
-	$wnsolr = new Apache_Solr_Service( 'localhost', '8983', '/solr/collection4' );
-	$lang=detectlanguage($query);
-	$num=0;
-	$word=$query;
-	$list[0]=$word;
-	if ($lang=="e"){
-			$wquery="synset_label:(".$word.") OR sense_label:(".$word.") OR lf_label:(".$word.")";
-		} else {
-			$wquery="synset_label_RUS:(".$word.") OR sense_label_RUS:(".$word.") OR lf_label_RUS:(".$word.")";
-		}
-	$response = $wnsolr->search( $wquery, 0, 1);
-	$nlist=array();
-		if ($response->response->numFound>0){
-			if ($lang=="e"){
-				$nlist[0]=$response->response->docs[0]->synset_label_RUS;
-				$nlist[1]=$response->response->docs[0]->sense_label_RUS;
-				$nlist[2]=$response->response->docs[0]->lf_label_RUS;
-			}else{
-				$nlist[0]=$response->response->docs[0]->synset_label;
-				$nlist[1]=$response->response->docs[0]->sense_label;
-				$nlist[2]=$response->response->docs[0]->lf_label;
-			}
-			$nlist=clear_empty_fields(array_unique($nlist));
-			$wlist[$num]="(".implode(" OR ",$nlist).")";
-	}else{
-		$wlist[$num]="ERROR!";
-		$vbp=1;
-	}
-	$num++;
-	if ($vbp==0){
-		$q2=implode(" AND ",$list);
-		$q3=implode(" AND ",$wlist);
-		$q="((".$q2.") OR (".$q3."))";
-		return $q;
-	}else{
-		return "error317";	
-	}
-}
-}
-
-
-
-
-
-
 
 
 
@@ -142,26 +52,7 @@ if (isset($_GET['t'])) {
 		$state+=1;
 	}
 }
-
-switch ($state){
-	case 0:		
-	break;
-	case 1:
-	break;
-	case 2:
-	break;
-	case 3:
-	break;
-	case 4:		
-	break;
-	case 5:
-	break;
-	case 6:
-	break;
-	case 7:
-	break;
-}
-  
+ 
   if (isset($_GET['o'])){
     $offset=$_GET['o'];
     if ($offset==""){
@@ -169,27 +60,19 @@ switch ($state){
     }
   }else{
     $offset = 0;
-  }   
-  if (isset($_GET['r'])){
-    $retry=$_GET['r'];
-  }else{
-	  $retry=0;
   } 
-  if ( ! $solr->ping()){
-	if ($retry>2){
+  if ( ! $solr->ping()){	
 			showHeader();
 	        echo "<pre>Solr service not responding.</pre>";
 	        showFooterSearch();
             showFooter();
-            exit;
-	}else{
-			header("Location: searchlog.php?r=".($retry+1)."&q=".str_replace(' ','+',$query)."&s=".$sort);
-			exit;
-	}
+            exit;	
   }  
   showHeader();
-  $query2=generatequery($query2,$focus);
-  $oquery=preparequery($query2);
+  $query2=generatequery($query,$state,$m1,$c1,$t1,$oquery);
+  $trans = array("(" => "", ")" => "");
+  $oquery=trim(strtr($oquery,$trans));
+  //$oquery=preparequery($query2);
   //echo $query2;
   if ($query2 != "")
   {
