@@ -137,7 +137,7 @@ switch ($state){
 		$q2=$c1;
 		$lang=detectlanguage($c1);
 		$tlist=translate_word_by_wordnet($t1);
-		if ($lang=='e'){//$q2 - eng, $q3 - rus, $t1 - rus, $tlist - eng
+		if ($lang=='e'){
 			if ($tlist!==false){
 				$oquery='"'.$c1.'" AND '.$tlist[0].' | "'.$nlist[0].'" AND '.$t1;
 				$wlist="((".implode(") OR (",$tlist)."))";
