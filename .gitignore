@@ -1,2 +1,4 @@
 pipeline.pear
 *.pear
+*.log
+*~

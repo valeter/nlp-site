@@ -8,7 +8,102 @@ if (isset($_GET['q'])) {
 } else {
     $q1 = "";
 }
-$meanings=suggest_by_meaning($q1);
+$state=0;
+if (isset($_GET['m'])) {
+	$m1=$_GET['m'];
+	if ($m1!='нет'){
+		$state+=4;
+	}
+}
+if (isset($_GET['c'])) {
+	$c1=$_GET['c'];
+	if ($c1!='нет'){
+		$state+=2;
+	}
+}
+if (isset($_GET['t'])) {
+	$t1=$_GET['t'];
+	if ($t1!='нет'){
+		$state+=1;
+	}
+}
+switch ($state){
+	case 0:
+		$meanings=suggest_by_meaning($q1);
+		$flag=suggest_from_dictionary($q1,$collocations,$themes);
+		if ($flag===false){
+			$collocations=array();
+			$themes=array();
+		}
+	break;
+	case 1:
+		$themes=array();
+		$themes[]=$t1;
+		$flag=suggest_by_using_theme($q1,$t1,$meanings,$collocations);
+		if ($flag===false){
+			$collocations=array();
+			$meanings=array();
+		}
+	break;
+	case 2:
+		$collocations=array();
+		$collocations[]=$c1;
+		$flag=suggest_by_using_collocation($q1,$c1,$meanings,$themes);
+		if ($flag===false){
+			$meanings=array();
+			$themes=array();
+		}
+	break;
+	case 3:
+		$themes=array();
+		$themes[]=$t1;
+		$collocations=array();
+		$collocations[]=$c1;
+		$flag=suggest_meaning($q1,$c1,$t1,$meanings);
+		if ($flag===false){
+			$meanings=array();
+		}
+	break;
+	case 4:
+		$meanings=array();
+		$meanings[]=$m1;
+		$flag=suggest_from_dictionary($m1,$collocations,$themes);
+		if ($flag===false){
+			$collocations=array();
+			$themes=array();
+		}
+	break;
+	case 5:
+		$themes=array();
+		$themes[]=$t1;
+		$meanings=array();
+		$meanings[]=$m1;
+		$flag=suggest_by_using_theme1($m1,$t1,$collocations);
+		if ($flag===false){
+			$collocations=array();
+		}
+	break;
+	case 6:	
+		$collocations=array();
+		$collocations[]=$c1;
+		$meanings=array();
+		$meanings[]=$m1;
+		$flag=suggest_by_using_collocation1($m1,$c1,$themes);
+		if ($flag===false){
+			$themes=array();
+		}
+	break;
+	case 7:
+		$themes=array();
+		$themes[]=$t1;
+		$meanings=array();
+		$meanings[]=$m1;
+		$collocations=array();
+		$collocations[]=$c1;
+	break;
+}
+
+
 //$collocations=$meanings;
 //$themes=$meanings;
 //print_r($meanings);
@@ -18,7 +113,7 @@ echo <<<END
 <a href="index.php">
 <img src="picture/mabi87.png" width="40%" alt="nlp-cloud"/>
 </a><br/>
-Система двуязычного (русско-английский, русско-английский) поиска <br />
+Система двуязычного (русско-английский, англо-русский) поиска <br />
 в массиве научных публикаций с разрешением многозначности запросов <br />
 END;
 echo <<<END
@@ -45,7 +140,7 @@ END;
 echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Значение</legend>'."\n";
-echo '<select size="7" name="m" class="soption" id="mean">'."\n";
+echo '<select size="7" name="m" class="soption" id="mean" onchange="this.form.submit();">'."\n";
 $vbp[0]=0;
 if (isset($_GET['m'])) {
 	$m1=$_GET['m'];
@@ -84,7 +179,7 @@ echo '</td>'."\n";
 echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Словосочетание</legend>'."\n";
-echo '<select size="7" name="c" class="soption" id="colloc" disabled="disabled">'."\n";
+echo '<select size="7" name="c" class="soption" id="colloc" onchange="this.form.submit();">'."\n";
 $vbp[1]=0;
 if (isset($_GET['c'])) {
 	$c1=$_GET['c'];
@@ -117,12 +212,12 @@ echo "</td>\n";
 #
 
 # 
-#display themess
+#display themes
 #
 echo '<td class="focus_element">'."\n";
 echo '<fieldset>'."\n";
 echo '   <legend>Тема</legend>'."\n";
-echo '<select size="7" name="t" class="soption" id="theme" disabled="disabled">'."\n";
+echo '<select size="7" name="t" class="soption" id="theme" onchange="this.form.submit();">'."\n";
 $vbp[2]=0;
 if (isset($_GET['t'])) {
 	$t1=$_GET['t'];
@@ -187,22 +282,13 @@ echo "</div>"."\n";
 echo <<<END
 <script type="text/javascript">
 var syncList1 = new syncList;
-syncList1.selectList = new Array( 'mean', 'colloc', 'theme');
+syncList1.selectList = new Array( 'quer','mean', 'colloc', 'theme');
 syncList1.dataList = {
 'mean':'0',
 'colloc':'1',
 'theme':'2'
 };
-syncList1.sync("mean","colloc","theme", "quer");
-
+syncList1.sync("quer");
+</script>'
 END;
-$snum=0;
-for ($i=0;$i<=2;$i++){
-	if ($vbp[$i]==1) {
-		$snum=$i;
-	}
-}
-echo "syncList1._init(syncList1.selectList[$snum]);"."\n";
-echo '</script>'."\n";
-
 ?>
