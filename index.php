@@ -46,10 +46,10 @@ require "auth.php";
 <div class="block_heading">Приложения для бизнеса</div>
 <div class="inner_block_content">
 
-<a href="#" id="block_mail">Система документооборота 
+<a href="http://80.69.144.218:6111/DocumentsFlow/" id="block_mail">Система документооборота 
 на основе корпоративного 
 почтового сервера</a>
-<a href="#" id="block_zakupki">Система конкурентной разведки, 
+<a href="http://80.69.144.218:6111/contracts" id="block_zakupki">Система конкурентной разведки, 
 анализирующая данные 
 о конкурентах по сайту госзакупок</a>
 </div>
@@ -60,7 +60,7 @@ require "auth.php";
   <div class="block_heading">Приложения для СМИ</div>
   <div class="inner_block_content">
 
-    <a href="#" id="block_smi">Система контроля за контентом 
+    <a href="http://109.120.155.154/massmediamonitoring/" id="block_smi">Система контроля за контентом 
     электронных СМИ в соответствии 
     с федеральным законом №436 
     «О защите детей от информации, 
