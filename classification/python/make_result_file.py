@@ -15,6 +15,9 @@ from boto.emr.bootstrap_action import BootstrapAction
 from boto.s3.key import Key
 import MySQLdb
 
+#sys.path.append(os.path.abspath("/root/billing-python/billing.py"))
+#import billing
+
 def prepare_s3(bucket_name):
 	try:
 		s3_connection = boto.connect_s3()
@@ -67,25 +70,6 @@ def create_and_return_bucket(s3_connection, bucket_name):
 		print e
 		return None
 
-def run_ie(filename):
-	ie_root = dirname(abspath(__file__)) + '/../ie/'
-	result_filename = dirname(abspath(__file__)) + "/../file-upload/server/php/files/" + filename + ".nlpresult"
-	ie_cmd = "java -jar " + ie_root + "InformationExtractionClassifier-0.1.jar " + ie_root + "dict/ " + result_filename
-	print "Running IE on file: " + filename
-	run_command(ie_cmd)
-
-def run_command(command):
-	try:
-		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-		output = process.communicate()[0]
-		print output
-	except Exception, e:
-		print "Error while executing command: " + str(command)
-
-def main(args):
-	script_name, filename = args
-	task = Task(filename)
-	task.process()
 
 class Task(object):
 	foldername = ""
@@ -227,14 +211,22 @@ class Task(object):
 
 			steps = self.get_steps(taskid, input_folder)
 			if self.start_cluster:
-				self.start_hadoop_cluster(steps)
+				pass
+				#self.start_hadoop_cluster(steps)
 			else:
-				self.emr_connection.add_jobflow_steps(self.jobflow_id, steps)
+				pass
+				#self.emr_connection.add_jobflow_steps(self.jobflow_id, steps)
 
 			self.wait_for_terminating()
 
-			print time.time() - start_time, ' seconds elapsed'
-
+			secs = time.time() - start_time
+			print secs, ' seconds elapsed'
+			"""
+			billing = billing.Billing()
+			billing.connect()
+			billing.add_record(work_time_seconds=secs, nodes=2, node_minute_price_cents=9, service='classification')
+			billing.close()
+			"""
 			bucket = self.s3_connection.get_bucket(self.bucket_name)
 			bucket.delete_key(input_folder + '/' + self.short_filename)
 			
@@ -242,6 +234,28 @@ class Task(object):
 		except Exception, e:
 			print "Unsupposed error: " + str(e)
 
+def run_ie(filename):
+	ie_root = dirname(abspath(__file__)) + '/../ie/'
+	input_filename = dirname(abspath(__file__)) + "/../file-upload/server/php/files/" + filename
+	result_filename = dirname(abspath(__file__)) + "/../file-upload/server/php/files/" + filename + ".nlpresult"
+	ie_cmd = "java -jar " + ie_root + "udk.jar " + input_filename + "  "+ ie_root + "microdicts " + ie_root + "dict/ " + result_filename
+	print "Running IE on file: " + filename
+	print ie_cmd
+	run_command(ie_cmd)
+
+def run_command(command):
+	try:
+		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+		output = process.communicate()[0]
+		print output
+	except Exception, e:
+		print "Error while executing command: " + str(command)
+
+def main(args):
+	script_name, filename = args
+	run_ie(filename)
+	#task = Task(filename)
+	#task.process()
 
 if __name__ == "__main__":
 	args = sys.argv

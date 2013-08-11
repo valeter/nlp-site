@@ -288,8 +288,8 @@ class UploadHandler
             $fin_file_name = $file_name;
             $fdir = '/var/www/classification/file-upload/server/php/files/';
             $result_arrays = array();
-            $udk = "wrong UDK";
-            $grnti = "wrong GRNTI";
+            $udk = "Ошибка классификации. Попробуйте загрузить файл ещё раз";
+            $grnti =  "";
             if ($handle = opendir($fdir)) {
                 while (false !== ($fname = readdir($handle)))
                 {
@@ -937,6 +937,7 @@ class UploadHandler
     }
 
     public function post($print_response = true) {
+    	putenv('LANG=en_US.UTF-8');
         if (isset($_REQUEST['_method']) && $_REQUEST['_method'] === 'DELETE') {
             return $this->delete($print_response);
         }
@@ -978,12 +979,12 @@ class UploadHandler
             for ($i = 0; $i < count($files); $i += 1) {	
             	$file = $files[$i];
             	$fin_file_name = $names[$i];
-            	$command = '/usr/bin/python /var/www/classification/python/make_result_file.py ' . $fin_file_name;
+            	$command = '/var/www/classification/python/make_result_file.py \'' . $fin_file_name . '\'';
 				$temp = exec($command, $output);
             	$fdir = '/var/www/classification/file-upload/server/php/files/';
 				$result_arrays = array();
-				$udk = $command;//"wrong UDK";
-                $grnti = $temp;//"wrong GRNTI";
+				$udk = "Ошибка классификации. Попробуйте загрузить файл ещё раз";
+                $grnti = "";
 				if ($handle = opendir($fdir)) {
 				    while (false !== ($fname = readdir($handle)))
 				    {
