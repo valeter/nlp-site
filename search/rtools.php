@@ -1,5 +1,6 @@
 <?php
 require_once( "tools.php" );
+require_once( '../Apache/Solr/Service2.php' );
 
 function suggest_meaning($query, $collocation, $theme, &$mlist){
 	$dsolr = new Apache_Solr_Service( 'localhost', '8983', '/solr/collection8' );
@@ -57,7 +58,7 @@ function suggest_by_using_collocation($query, $collocation, &$mlist, &$tlist){
 		foreach ($tlist2 as $label){
 			$lquery="label:".$label;
 			$response = $lsolr->search( $lquery, 0, 1);
-			$tlist3[]=$response->response->docs[0]->text;
+			if ($response->response->numFound>0){$tlist3[]=$response->response->docs[0]->text;}
 		}
 		$tlist=clear_empty_fields(array_unique($tlist3));
 		return true;
