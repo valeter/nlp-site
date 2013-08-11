@@ -168,7 +168,7 @@ def main(args):
 		return
 
 	end = time.time()
-	total = start - end
+	total = end - start
 
 	try:
 		import billing
