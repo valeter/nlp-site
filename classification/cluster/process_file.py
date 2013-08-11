@@ -3,6 +3,7 @@
 
 import sys
 import time
+import boto
 from os.path import dirname, abspath
 from boto.emr.connection import EmrConnection
 from boto.emr.step import JarStep
@@ -28,19 +29,19 @@ def get_steps(taskid, input_key):
 		jar='s3n://' + bucket_name + '/behemoth/behemoth-core.jar',
 		step_args=['com.digitalpebble.behemoth.util.CorpusGenerator',
 			'-i', 's3n://' + bucket_name + '/' + input_key,
-			'-o', '/mnt/bcorpus/' + taskid])
+			'-o', 's3n://' + bucket_name + '/b' + taskid])
 
 	tika_step = JarStep(name='tika-' + taskid,
 		jar='s3n://' + bucket_name + '/behemoth/behemoth-tika.jar',
 		step_args=['com.digitalpebble.behemoth.tika.TikaDriver',
-			'-i', '/mnt/bcorpus' + taskid,
-			'-o', '/mnt/tcorpus' + taskid])
+			'-i', 's3n://' + bucket_name + '/b' + taskid,
+			'-o', '/mnt/t' + taskid])
 
 	uima_step = JarStep(name='uima-' + taskid,
 		jar='s3n://' + bucket_name + '/behemoth/behemoth-uima.jar',
 		step_args=['com.digitalpebble.behemoth.uima.UIMADriver',
-			'/mnt/tcorpus' + taskid,
-			'/mnt/ucorpus' + taskid,
+			'/mnt/t' + taskid,
+			'/mnt/u' + taskid,
 			'/mnt/pipeline.pear'])
 
 	steps = []
@@ -50,10 +51,21 @@ def get_steps(taskid, input_key):
 
 	return steps
 
-def wait_for_terminating():
+def get_cluster_status(cluster_id):
+	try:
+		emr_connection = EmrConnection()
+		flow = emr_connection.describe_jobflow(cluster_id)
+		if flow == None:
+			return "none"
+		return flow.state
+	except Exception, e:
+		return "none"
+
+def wait_for_terminating(cluster_id):
 	l = 0
 	max_time = 1300
 	wait_time = 0
+	i = 0
 	while(True):
 		try:
 			cur_time = time.time()
@@ -68,15 +80,19 @@ def wait_for_terminating():
 
 			db.close()
 			time.sleep(5)
+			status = get_cluster_status(cluster_id)
+			if status != u"RUNNING":
+				i += 1
+				if i >= 20:
+					break
 
 			wait_time += time.time() - cur_time
 			if wait_time > max_time:
 				break 
 		except Exception, e:
 			l = l + 1
-			if l == 10:
-				break
-			return False
+			if l >= 10:
+				return False
 	return False
 
 def run_command(command):
@@ -85,7 +101,6 @@ def run_command(command):
 		output = process.communicate()[0]
 		return True
 	except Exception, e:
-		print e
 		return False
 
 def add_steps(cluster_id, key):
@@ -101,6 +116,7 @@ def delete_key(key):
 		s3_connection = boto.connect_s3()
 		bucket = s3_connection.get_bucket(bucket_name)
 		bucket.delete_key(key)
+		bucket.delete_key('b' + key)
 		return True
 	except Exception, e:
 		return False
@@ -109,27 +125,47 @@ def path_leaf(path):
     head, tail = ntpath.split(path)
     return tail or ntpath.basename(head)
 
-def main(args):
-	script_name, cluster_id, filename = args
+def run_ie(filename):
+	try:
+		ie_root = dirname(abspath(__file__)) + '/../ie/'
+		input_filename = filename
+		result_filename = filename + ".nlpresult"
+		ie_cmd = "java -jar " + ie_root + "InformationExtractionClassifier-0.1.jar " + ie_root + "dict/ " + result_filename
+		run_command(ie_cmd)
+		return True
+	except Exception, e:
+		 return False
 
-	if not write_file_to_aws(filename, path_leaf(filename)):
+def print_result(filename):
+	with open(filename, "r") as f:
+		print f.readline().strip()
+		print f.readline().strip()
+
+def main(args):
+	script_name, cluster_id, filename, file_id = args
+
+	if not write_file_to_aws(filename, file_id):
 		print "error i"
 		return
 
-	if not add_steps(cluster_id, path_leaf(filename)):
+	if not add_steps(cluster_id, file_id):
 		print "error c"
 		return
-
-	data = wait_for_terminating()
+	
+	data = wait_for_terminating(cluster_id)
 	if (data == False):
 		print "error w"
 		return
 
-	if not delete_key(path_leaf(filename)):
+	if not delete_key(file_id):
 		print "error d"
 		return
 
-	print data
+	if not run_ie(filename):
+		print "error e"
+		return
+
+	print_result(filename + ".nlpresult")
 
 if __name__ == "__main__":
 	args = sys.argv
