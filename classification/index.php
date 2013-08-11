@@ -86,7 +86,7 @@
 		}
 
 		.lefth {
-			left: 7em;
+			left: 5.8em;
 			position: relative;
 		}
 
@@ -98,7 +98,7 @@
 		}
 
 		.footer {
-			left: 75em;
+			left: 77.2em;
 			position: relative;
 		}
 	</style>
@@ -158,7 +158,6 @@
 				if ($cluster_status == "STARTING" || $cluster_status == "BOOTSTRAPPING") {
 					header('Refresh: 5; URL=index.php');
 					echo "<div>Ожидание запуска кластера...</div>";
-					exit;
 				} else {
 					echo $stop_cluster_form;
 
@@ -181,7 +180,6 @@
 						echo "<div>Дождитесь рузультатов  обработки...</div>";
 						header('Refresh: 5; URL=index.php');
 						echo "<div>Ожидание запуска кластера...</div>";
-						exit;
 					} else {
 						echo $load_files_form;
 					}

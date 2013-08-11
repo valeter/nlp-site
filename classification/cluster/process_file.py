@@ -142,6 +142,8 @@ def print_result(filename):
 		print f.readline().strip()
 
 def main(args):
+	start = time.time()
+
 	script_name, cluster_id, filename, file_id = args
 
 	if not write_file_to_aws(filename, file_id):
@@ -164,6 +166,18 @@ def main(args):
 	if not run_ie(filename):
 		print "error e"
 		return
+
+	end = time.time()
+	total = start - end
+
+	try:
+		import billing
+		billing = billing.Billing()
+		billing.connect()
+		billing.add_record(work_time_seconds=total, nodes=2, node_minute_price_cents=9, service='classification')
+		billing.close()
+	except Exception, e:
+		pass
 
 	print_result(filename + ".nlpresult")
 

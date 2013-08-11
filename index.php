@@ -73,7 +73,7 @@ require "auth.php";
 <div class="inner_block1">
   <div class="block_heading">Приложения для науки</div>
   <div class="inner_block_content">
-    <a href="classification/file-upload/index.html" id="block_autoclass">Система автоматической 
+    <a href="classification/index.php" id="block_autoclass">Система автоматической 
     классификации научных текстов 
     в соответствии с классификаторами 
     УДК/ГРНТИ.</a>
