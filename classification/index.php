@@ -101,12 +101,19 @@
 			left: 77.2em;
 			position: relative;
 		}
+
+		A:link {text-decoration: none; color: #117300;}
+		A:visited {text-decoration: none; color: #117300;}
+		A:active {text-decoration: none; color: #117300;}
+		A:hover {text-decoration: underline overline; color: black;}
 	</style>
 </head>
 <body>
+	<div style="text-align: center; margin-bottom: 3em; margin-top:2em;"><b>Система автоматической классификации научных текстов в соответствии с классификаторами УДК/ГРНТИ</b></div>
 	<div class='header'>
 		<div class='lefth'>
 			<a href="../index.php">На главную</a>
+			<a href="help.pdf" style="margin-left: 1em;">Справка</a>
 		</div>
 		<div class='righth'>
 			ВАЖНО! Останавливайте кластер после завершения работы с программой!
@@ -115,9 +122,10 @@
 	<div class='separator'></div>
 	<div class='main'>
 	<?php
+
 		$cluster_script_folder = '/var/www/classification/cluster';
 		$run_cluster_form = "<form method='post'>
-								<div>Запуск кластера</div>
+								<div>Запуск кластера (может длиться от 3 до 5 минут)</div>
 								<p><input type='submit' name='launch2' value='2 узла'/>
 								<input type='submit' name='launch5' value='5 узлов'/>
 								<input type='submit' name='launch10' value='10 узлов'/></p>
@@ -129,11 +137,13 @@
 								<div class='file-wrapper'>
 								    <input name='userfile' type='file' />
 								    <span class='button'>Выберите статью</span>
-								    
 								</div>
 								<input name='send_file' type='submit' value='Отправить' />
-							</form>";
+							</form>
+							<div>Время обработки одного файла может составлять от 1 до 10 минут</div>";
+
 		session_start();
+
 		if (!isset($_SESSION['cluster'])) {
 			echo $run_cluster_form;
 		} else {
@@ -226,6 +236,7 @@
 				} else {
 					echo "<div>Ошибка при остановке кластера</div>";
 				}
+				
 				header ("Location: index.php");
 			} 
 			if (isset($_POST['send_file'])) {
@@ -303,7 +314,7 @@
 				$need_to_run = true;
 			}
 			if ($need_to_run == true) {
-				echo "<div>Запуск кластера. Узлов: " . $_SESSION['numnodes' . "</div>"];
+				echo "<div>Запуск кластера. Узлов: " . $_SESSION['numnodes'] . "</div>";
 				$run_cluster_command = $run_cluster_command . $_SESSION['numnodes'];
 				$output = array();
 				exec($run_cluster_command, $output);
