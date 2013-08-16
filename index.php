@@ -60,7 +60,7 @@ require "auth.php";
   <div class="block_heading">Приложения для СМИ</div>
   <div class="inner_block_content">
 
-    <a href="http://download.alik.su/MassmediaMonitoring2/violations/" id="block_smi">Система контроля за контентом 
+    <a href="http://109.120.163.21/massmediamonitoring/" id="block_smi">Система контроля за контентом 
     электронных СМИ в соответствии 
     с федеральным законом №436 
     «О защите детей от информации, 
