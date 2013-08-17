@@ -14,7 +14,7 @@ from boto.emr.step import JarStep
 from boto.emr.bootstrap_action import BootstrapAction
 from boto.s3.key import Key
 import MySQLdb
-
+import billing
 #sys.path.append(os.path.abspath("/root/billing-python/billing.py"))
 #import billing
 
@@ -221,12 +221,12 @@ class Task(object):
 
 			secs = time.time() - start_time
 			print secs, ' seconds elapsed'
-			"""
+			
 			billing = billing.Billing()
 			billing.connect()
 			billing.add_record(work_time_seconds=secs, nodes=2, node_minute_price_cents=9, service='classification')
 			billing.close()
-			"""
+			
 			bucket = self.s3_connection.get_bucket(self.bucket_name)
 			bucket.delete_key(input_folder + '/' + self.short_filename)
 			
