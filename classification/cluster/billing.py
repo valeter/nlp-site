@@ -21,4 +21,3 @@ class Billing:
                         work_time_seconds,
                         nodes
                     ) )
-

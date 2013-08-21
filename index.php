@@ -85,9 +85,9 @@ require "auth.php";
   <div class="block_heading">Статистика</div>
   <div class="inner_block_content">
     <p>Amazon</p>
-    <div class="stats_block">stats</div>
+    <div class="stats_block" id="amazon"><?php include 'amazon.php'; ?></div>
     <p>Hadoop</p>
-    <div class="stats_block">stats</div>
+    <div class="stats_block" id="hadoop"><?php include 'hadoop.php'; ?></div>
     <p>Биллинг</p>
     <div class="stats_block" id="billing"><?php include 'billing.php'; ?></div>
   </div>

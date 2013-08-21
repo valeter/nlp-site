@@ -68,3 +68,12 @@ height:expression(document.body.clientHeight<500?"500px":"auto");
 	overflow-y: auto;
 }
 
+#hadoop {
+	font-size: x-small;
+	overflow-y: auto;
+}
+
+#amazon {
+	font-size: x-small;
+	overflow-y: auto;
+}

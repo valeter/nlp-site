@@ -4,6 +4,7 @@
 import sys
 import time
 import boto
+import os
 from os.path import dirname, abspath
 from boto.emr.connection import EmrConnection
 from boto.emr.step import JarStep
@@ -144,7 +145,8 @@ def print_result(filename):
 def main(args):
 	start = time.time()
 
-	script_name, cluster_id, filename, file_id = args
+	script_name, cluster_id, filename, file_id, num_nodes = args
+	num_nodes = int(num_nodes)
 
 	if not write_file_to_aws(filename, file_id):
 		print "error i"
@@ -174,10 +176,84 @@ def main(args):
 		import billing
 		billing = billing.Billing()
 		billing.connect()
-		billing.add_record(work_time_seconds=total, nodes=2, node_minute_price_cents=9, service='classification')
+		billing.add_record(work_time_seconds=total, nodes=num_nodes, node_minute_price_cents=9, service='classification')
 		billing.close()
 	except Exception, e:
 		pass
+
+	step_num = 4
+	try:
+		with open(dirname(abspath(__file__)) + '/step', 'r') as f:
+			c_id = f.readline().strip()
+			c_step = f.readline().strip()
+
+			if (c_id == cluster_id):
+				step_num = int(c_step) + 3
+
+		with open(dirname(abspath(__file__)) + '/step', 'w') as f:
+			f.write(cluster_id + '\n')
+			f.write(str(step_num) + '\n')
+	except Exception, e:
+		step_num = 4
+
+	try:
+		import hadoop
+		hadoop = hadoop.Hadoop()
+		hadoop.connect()
+		import aws_reader
+		aws_reader = aws_reader.Reader("udk-bucket")
+		log_str = ""
+		i = 0
+		while (i < 24):
+			log_str = aws_reader.read("jobflow_logs/" + cluster_id + "/steps/" + str(step_num - 2) + "/syslog")
+			if (len(log_str) != 0):
+				break
+			time.sleep(5)
+			i += 1
+
+		if (len(log_str) == 0):
+			try:
+				hadoop = hadoop.Hadoop()
+				hadoop.connect()
+				log_str = aws_reader.read("jobflow_logs/" + cluster_id + "/steps/" + str(step_num - 2) + "/syslog")
+
+				if (len(log_str) == 0):
+					raise Exception()
+
+				hadoop.add_record(log_str)
+				hadoop.close()
+			except Exception, e:
+				pass
+
+			if (len(log_str) == 0):
+				raise Exception()
+
+		hadoop.add_record(log_str)
+		hadoop.close()
+	except Exception, e:
+		try:
+			import hadoop
+			hadoop = hadoop.Hadoop()
+			hadoop.connect()
+			from datetime import datetime
+			hadoop.add_record(str(datetime.now()) + "  Cannot read log at: " + "jobflow_logs/" + cluster_id + "/steps/4/syslog")
+			hadoop.close()
+		except Exception, e:
+			pass
+
+	try:
+		sys.stdout = os.devnull
+		sys.stderr = os.devnull
+		import amazon_stat
+		amazon_stat = amazon_stat.AmazonStats()
+		amazon_stat.connect()
+		amazon_stat.add_record("m2xlarge", num_nodes, total)
+		amazon_stat.close()
+	except:
+		pass
+
+	sys.stdout = sys.__stdout__
+	sys.stderr = sys.__stderr__
 
 	print_result(filename + ".nlpresult")
 

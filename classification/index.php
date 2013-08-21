@@ -83,22 +83,25 @@
 		.header {
 			display: block-line;
 			margin-top: 1em;
+			position: relative;
 		}
 
 		.lefth {
-			left: 5.8em;
+			left: 10%;
 			position: relative;
 		}
 
 		.righth {
 			color: red;
 			margin-top: -1em;
-			left: 57em;
+			float:right;
+			right: 10%;
 			position: relative;
 		}
 
 		.footer {
-			left: 77.2em;
+			right: 10%;
+			float: right;
 			position: relative;
 		}
 
@@ -263,7 +266,7 @@
 				} else {
 					$_SESSION['file_id'] = $_SESSION['file_id'] + 1;
 				}
-				$process_file_command = $cluster_script_folder .'/process_file.py ' . trim($_SESSION['cluster']) . " " . $uploadfile . " " . $_SESSION['file_id'];
+				$process_file_command = $cluster_script_folder .'/process_file.py ' . trim($_SESSION['cluster']) . " " . $uploadfile . " " . $_SESSION['file_id'] . " " . $_SESSION['numnodes'];
 				$output = array();
 				exec($process_file_command, $output);
 				$errors = array("error i"=>"Ошибка загрузки файла в Amazon S3", 
