@@ -4,6 +4,7 @@
 from xml.dom import minidom
 from xml.dom.minidom import Node
 from os.path import isfile, join, dirname, abspath
+import pyodbc
 
 
 class Organization(object):
@@ -488,5 +489,16 @@ class RubricsMapper(object):
 	def get_rubric3(self, str):
 		return self.rubric3[str]
 
-notification = Notification('/home/valter/Dropbox/contracts/printForm4.xml', '/home/valter/Dropbox/contracts/Сведения заказа4.html')
-print unicode(notification.parse())
+class BDConnector(object):
+	def connect(self):
+		cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=109.120.163.21;DATABASE=NlpCloudContracts;UID=root;PWD=tatishev5.4')
+		cursor = cnxn.cursor()
+		cursor.execute("select * from Organization")
+		rows = cursor.fetchall()
+		for row in rows:
+		    print row.user_id, row.user_name
+
+
+BDConnector().connect()
+#notification = Notification('/home/valter/Dropbox/contracts/printForm4.xml', '/home/valter/Dropbox/contracts/Сведения заказа4.html')
+#print unicode(notification.parse())
